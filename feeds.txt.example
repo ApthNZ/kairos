@@ -1,0 +1,23 @@
+# RSS Feeds Configuration
+# Format: URL|Name|Priority (0-10, higher = shown first)
+#
+# Priority Guidelines:
+#   10 - Critical (CERTs, emergency alerts)
+#   9  - High (exploit databases, CVE tracking)
+#   8  - Important (major vendor security blogs)
+#   7  - Normal (security research, vendor updates)
+#   6  - Medium (red team blogs, technical content)
+#   5  - Low (general security news)
+#   0-4 - Optional/background
+
+# Example feeds - replace with your own
+https://feeds.feedburner.com/TheHackersNews|The Hacker's News|9
+https://www.bleepingcomputer.com/feed/|Bleeping Computer|8
+https://krebsonsecurity.com/feed/|Krebs on Security|8
+https://www.schneier.com/blog/atom.xml|Schneier on Security|7
+https://threatpost.com/feed/|Threatpost|7
+
+# Add your threat intelligence feeds here
+# US-CERT: https://www.cisa.gov/cybersecurity-advisories/all.xml|US-CERT|10
+# ExploitDB: https://www.exploit-db.com/rss.xml|Exploit Database|9
+# NVD: https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss.xml|NVD Recent CVEs|9

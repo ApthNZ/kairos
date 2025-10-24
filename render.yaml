@@ -1,0 +1,64 @@
+services:
+  - type: web
+    name: kairos
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      # Required: Database path (default is fine)
+      - key: DATABASE_PATH
+        value: /app/data/triage.db
+
+      # Feed fetching configuration
+      - key: FEED_REFRESH_MINUTES
+        value: 5
+      - key: MAX_ITEMS_PER_FEED
+        value: 50
+      - key: FEED_PARALLEL_WORKERS
+        value: 5
+      - key: FEED_TIMEOUT_SECONDS
+        value: 30
+
+      # Optional: Discord/Slack webhook for alerts
+      # Add your webhook URL in Render dashboard after deployment
+      - key: WEBHOOK_URL
+        sync: false
+      - key: WEBHOOK_TIMEOUT_SECONDS
+        value: 10
+      - key: WEBHOOK_RETRY_COUNT
+        value: 3
+
+      # Daily digest configuration
+      # Store digests in data volume for persistence on Render free tier
+      - key: DIGEST_OUTPUT_PATH
+        value: /app/data/digests
+      - key: DIGEST_GENERATION_TIME
+        value: "09:00"
+      - key: TIMEZONE
+        value: UTC
+
+      # Web interface
+      - key: PORT
+        value: 8083
+      - key: HOST
+        value: 0.0.0.0
+
+      # Optional: Authentication token
+      # Auto-generated secure token for production
+      - key: AUTH_TOKEN
+        generateValue: true
+        sync: false
+
+      # User identification for audit trail
+      - key: USER_IDENTIFIER
+        value: render-user
+
+      # Logging
+      - key: LOG_LEVEL
+        value: INFO
+
+    # Persistent disk for database
+    disk:
+      name: kairos-data
+      mountPath: /app/data
+      sizeGB: 1

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kairos - Threat Intelligence Triage</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Kairos</h1>
+            <div class="stats">
+                <span id="remaining-count" class="stat-badge">Loading...</span>
+                <button id="undo-btn" class="btn-undo hidden" onclick="undoLastAction()">
+                    ↶ Undo
+                </button>
+                <button id="skip-all-btn" class="btn-skip-all" onclick="skipAllItems()">
+                    Skip All
+                </button>
+                <span id="status-message" class="status-message"></span>
+            </div>
+        </header>
+
+        <main id="main-content">
+            <div id="loading-screen" class="loading-screen">
+                <div class="spinner"></div>
+                <p>Loading next item...</p>
+            </div>
+
+            <div id="no-items-screen" class="no-items-screen hidden">
+                <div class="empty-state">
+                    <h2>All Caught Up!</h2>
+                    <p>No pending items to review.</p>
+                    <button onclick="location.reload()" class="btn btn-primary">Refresh</button>
+                </div>
+            </div>
+
+            <div id="item-screen" class="item-screen hidden">
+                <article class="feed-item">
+                    <div class="item-header">
+                        <h2 id="item-title">Article Title</h2>
+                        <div class="item-meta">
+                            <span class="source" id="item-source">Source</span>
+                            <span class="separator">•</span>
+                            <span class="date" id="item-date">Date</span>
+                        </div>
+                    </div>
+
+                    <div class="item-body">
+                        <p id="item-summary">Article summary goes here...</p>
+                        <a id="item-link" href="#" target="_blank" class="read-more">Read full article →</a>
+                    </div>
+
+                    <div class="item-actions">
+                        <button id="btn-alert" class="btn btn-alert" onclick="triageItem('alert')">
+                            <span class="btn-icon">🚨</span>
+                            <span class="btn-text">Immediate Alert</span>
+                            <span class="btn-shortcut">A</span>
+                        </button>
+
+                        <button id="btn-digest" class="btn btn-digest" onclick="triageItem('digest')">
+                            <span class="btn-icon">📋</span>
+                            <span class="btn-text">Daily Digest</span>
+                            <span class="btn-shortcut">D</span>
+                        </button>
+
+                        <button id="btn-skip" class="btn btn-skip" onclick="triageItem('skip')">
+                            <span class="btn-icon">⏭️</span>
+                            <span class="btn-text">Skip</span>
+                            <span class="btn-shortcut">S</span>
+                        </button>
+                    </div>
+                </article>
+            </div>
+
+            <div id="error-screen" class="error-screen hidden">
+                <div class="error-state">
+                    <h2>Error</h2>
+                    <p id="error-message">Something went wrong</p>
+                    <button onclick="location.reload()" class="btn btn-primary">Retry</button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="footer-content">
+                <div class="footer-links">
+                    <a href="/api/metrics" target="_blank">Metrics</a>
+                    <span class="separator">•</span>
+                    <a href="/api/digest/latest" target="_blank">Latest Digest</a>
+                    <span class="separator">•</span>
+                    <a href="#" onclick="generateDigestNow(); return false;">Generate Digest Now</a>
+                    <span class="separator">•</span>
+                    <a href="#" onclick="showHelp(); return false;">Keyboard Shortcuts</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Keyboard Shortcuts</h3>
+            <div class="shortcuts">
+                <div class="shortcut">
+                    <kbd>A</kbd>
+                    <span>Mark as Immediate Alert (send webhook)</span>
+                </div>
+                <div class="shortcut">
+                    <kbd>D</kbd>
+                    <span>Add to Daily Digest</span>
+                </div>
+                <div class="shortcut">
+                    <kbd>S</kbd>
+                    <span>Skip (no action)</span>
+                </div>
+                <div class="shortcut">
+                    <kbd>U</kbd>
+                    <span>Undo last action</span>
+                </div>
+                <div class="shortcut">
+                    <kbd>?</kbd>
+                    <span>Show this help</span>
+                </div>
+            </div>
+            <button onclick="hideHelp()" class="btn btn-primary">Close</button>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>

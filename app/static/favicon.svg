@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4a4a4a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a1a1a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Crow silhouette -->
+  <g fill="url(#grad)">
+    <!-- Body -->
+    <ellipse cx="32" cy="35" rx="12" ry="16"/>
+    <!-- Head -->
+    <circle cx="32" cy="20" r="8"/>
+    <!-- Beak -->
+    <path d="M 38 20 L 45 18 L 38 17 Z"/>
+    <!-- Left wing -->
+    <path d="M 22 30 Q 10 25, 8 35 Q 12 33, 20 35 Z"/>
+    <!-- Right wing -->
+    <path d="M 42 30 Q 54 25, 56 35 Q 52 33, 44 35 Z"/>
+    <!-- Tail -->
+    <path d="M 28 48 Q 25 58, 20 62 Q 28 56, 32 52 Q 36 56, 44 62 Q 39 58, 36 48 Z"/>
+    <!-- Eye -->
+    <circle cx="35" cy="18" r="1.5" fill="#ff4444"/>
+  </g>
+</svg>
