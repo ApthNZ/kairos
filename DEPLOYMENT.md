@@ -21,6 +21,34 @@ This guide covers deploying Kairos to various platforms and managing feeds post-
    - Your instance: `https://your-service-name.onrender.com`
    - Health check: `https://your-service-name.onrender.com/health`
 
+### ⚠️ Important: Free Tier Storage Limitations
+
+**Render's free tier uses ephemeral storage:**
+- Database stored in `/app/data/triage.db`
+- **Data is LOST on every restart or redeploy**
+- Service restarts happen on code changes, manual restarts, or platform maintenance
+- This makes free tier suitable ONLY for demos and testing
+
+**For persistent data (production use):**
+
+1. Upgrade to Starter tier ($7/month):
+   - Go to service Settings → Plan
+   - Upgrade to "Starter"
+   - Add persistent disk:
+     - Dashboard → Disks → "Add Disk"
+     - Name: `kairos-data`
+     - Mount Path: `/app/data`
+     - Size: 1GB (sufficient for most use cases)
+   - Redeploy service
+
+2. Or self-host with Docker Compose (see below)
+
+**Free Tier Best Use Cases:**
+- Quick feature testing
+- Showing Kairos to colleagues
+- Evaluating before committing to paid tier or self-hosting
+- Short-term triage sessions (cleared on restart)
+
 ### Post-Deployment Configuration
 
 #### Add Webhook (Optional)
@@ -361,8 +389,14 @@ Decrease if hitting rate limits
 ### Render.com Free Tier
 - **Cost**: $0/month
 - **Limits**: Sleeps after 15 min inactivity, 750 hours/month
-- **Storage**: 1GB persistent disk
-- **Best for**: Demos, personal use
+- **Storage**: ⚠️ **Ephemeral only** (data wiped on restart)
+- **Best for**: Demos, testing only (NOT for persistent use)
+
+### Render.com Starter Tier
+- **Cost**: $7/month
+- **Limits**: Always-on, no sleep
+- **Storage**: Persistent disk (1GB+ available)
+- **Best for**: Production use with data persistence
 
 ### Railway.app
 - **Cost**: $0-$5/month (free credits)

@@ -79,10 +79,20 @@ Choose your deployment method:
 
 Your Kairos instance will be live at `https://your-service-name.onrender.com`
 
-**Free Tier Notes:**
+**⚠️ Free Tier Limitations:**
+- **Ephemeral storage** - Database is wiped on each restart/redeploy (demo use only)
 - Service sleeps after 15 minutes of inactivity
 - First request after sleep takes ~30 seconds (cold start)
-- Perfect for demos and personal use
+- **For persistent data:** Upgrade to Starter tier ($7/month) which includes persistent disks
+
+**Free tier is perfect for:**
+- Testing Kairos features
+- Demoing to colleagues
+- Evaluating before self-hosting
+
+**Not recommended for:**
+- Production triage workflows
+- Long-term data retention
 
 📖 **See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment guides, feed management, and troubleshooting.**
 

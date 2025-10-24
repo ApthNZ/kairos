@@ -44,10 +44,9 @@ services:
         value: 0.0.0.0
 
       # Optional: Authentication token
-      # Auto-generated secure token for production
+      # Leave empty for no auth, or set a secure token
       - key: AUTH_TOKEN
-        generateValue: true
-        sync: false
+        value: ""
 
       # User identification for audit trail
       - key: USER_IDENTIFIER
@@ -57,8 +56,6 @@ services:
       - key: LOG_LEVEL
         value: INFO
 
-    # Persistent disk for database
-    disk:
-      name: kairos-data
-      mountPath: /app/data
-      sizeGB: 1
+    # NOTE: Persistent disks require paid tier ($7/month)
+    # Free tier storage is ephemeral - data lost on restart/redeploy
+    # For production use with data persistence, upgrade to Starter tier
