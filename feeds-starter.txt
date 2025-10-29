@@ -1,0 +1,35 @@
+# Kairos Starter Feed Pack
+# Curated threat intelligence feeds for demo and initial deployment
+# Format: URL|Name|Priority (0-10, higher = shown first)
+
+# === Tier 1: Government CERTs (Priority 10) ===
+https://www.cisa.gov/cybersecurity-advisories/all.xml|CISA Cybersecurity Advisories|10
+https://www.ncsc.gov.uk/api/1/services/v1/all-rss-feed.xml|UK NCSC Advisories|10
+https://cert.europa.eu/publications/threat-intelligence-rss|CERT-EU Threat Intelligence|10
+
+# === Tier 2: CVE & Exploit Databases (Priority 9) ===
+https://www.exploit-db.com/rss.xml|Exploit-DB Updates|9
+https://packetstorm.news/rss/files|Packet Storm Security|9
+https://iscxml.sans.org/rssfeed.xml|SANS Internet Storm Center|9
+
+# === Tier 3: Threat Research Labs (Priority 8) ===
+https://www.talosintelligence.com/vulnerability_reports/feed|Cisco Talos Vulnerabilities|8
+https://research.checkpoint.com/feed|Check Point Research|8
+https://thedfirreport.com/feed/|The DFIR Report|8
+
+# === Tier 4: Industry News & Analysis (Priority 7) ===
+https://feeds.feedburner.com/TheHackersNews|The Hacker's News|7
+https://www.bleepingcomputer.com/feed/|Bleeping Computer|7
+https://krebsonsecurity.com/feed/|Krebs on Security|7
+https://www.darkreading.com/rss.xml|Dark Reading|7
+https://www.securityweek.com/feed/|SecurityWeek|7
+
+# This starter pack provides:
+# - 15 high-quality sources
+# - Government/CERT alerts for critical threats
+# - CVE/exploit tracking
+# - Vendor threat intelligence
+# - Security news for context
+# - Fast initial load (~30-60 seconds)
+#
+# Add more feeds via the API or by editing this file!

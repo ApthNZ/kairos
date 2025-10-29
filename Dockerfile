@@ -9,6 +9,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY app /app
 
+# Copy starter feeds for cloud deployments (Render, Railway, etc.)
+COPY feeds-starter.txt /app/feeds-starter.txt
+
 # Create directories for data persistence
 RUN mkdir -p /app/data /app/digests /app/static
 

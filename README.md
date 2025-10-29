@@ -66,18 +66,24 @@ Choose your deployment method:
 
 **Post-Deployment Setup:**
 
-1. Go to your service dashboard on Render
-2. Navigate to "Environment" tab
-3. **Optional but recommended:**
+1. **Ready to use!** Your instance comes pre-configured with 15 curated threat intelligence feeds:
+   - Government CERTs (CISA, UK NCSC, CERT-EU)
+   - CVE/Exploit databases (Exploit-DB, Packet Storm, SANS ISC)
+   - Threat research labs (Cisco Talos, Check Point, DFIR Report)
+   - Security news (The Hacker's News, Bleeping Computer, Krebs, Dark Reading)
+
+2. **Optional configuration** (via Render dashboard → Environment tab):
    - Add `WEBHOOK_URL` - Your Discord/Slack webhook for alerts
-   - Update `AUTH_TOKEN` if you want a custom token (one is auto-generated)
+   - Update `AUTH_TOKEN` if you want a custom token
    - Change `TIMEZONE` to your timezone (default: UTC)
-4. Add your feeds:
-   - Connect via Shell in Render dashboard
-   - Edit `/app/feeds.txt` with your feeds (see format below)
-   - Or use the API (see API section)
+
+3. **Add more feeds** (optional):
+   - Use the API to add feeds (see API section)
+   - Or connect via Shell and edit `/app/feeds-starter.txt`
 
 Your Kairos instance will be live at `https://your-service-name.onrender.com`
+
+**Start triaging immediately!** The curated starter feeds will begin fetching within 5 minutes of deployment.
 
 **⚠️ Free Tier Limitations:**
 - **Ephemeral storage** - Database is wiped on each restart/redeploy (demo use only)
@@ -188,7 +194,21 @@ Once running, you'll see a clean triage interface showing one item at a time.
 
 ### Feed Management
 
-**Option 1: Edit feeds.txt**
+**Cloud Deployments (Render, Railway, Fly.io):**
+
+Kairos ships with 15 curated starter feeds pre-configured. You can add more feeds using:
+
+**Option 1: Use the API** (Recommended)
+```bash
+curl -X POST http://localhost:8083/api/feeds \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/feed.xml", "name": "Example", "priority": 8}'
+```
+
+**Self-Hosted Deployments (Docker Compose):**
+
+**Option 1: Edit feeds.txt** (for custom feed lists)
 ```
 # Format: URL|Name|Priority (0-10)
 https://feeds.feedburner.com/TheHackersNews|The Hacker's News|9
@@ -198,13 +218,7 @@ https://krebsonsecurity.com/feed/|Krebs on Security|8
 
 Then restart: `docker-compose restart`
 
-**Option 2: Use the API**
-```bash
-curl -X POST http://localhost:8083/api/feeds \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com/feed.xml", "name": "Example", "priority": 8}'
-```
+**Option 2: Use the API** (same as above)
 
 ### Webhook Integration
 

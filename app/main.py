@@ -81,9 +81,19 @@ async def lifespan(app: FastAPI):
     logger.info("Database initialized")
 
     # Load feeds from file if exists
-    feeds_file = Path("/app/feeds.txt")
-    if feeds_file.exists():
-        await load_feeds_from_file(str(feeds_file))
+    # Prefer feeds.txt (for local docker-compose with custom feeds)
+    # Fall back to feeds-starter.txt (for Render/cloud deployments with defaults)
+    full_feeds = Path("/app/feeds.txt")
+    starter_feeds = Path("/app/feeds-starter.txt")
+
+    if full_feeds.exists():
+        logger.info("Loading feeds from feeds.txt")
+        await load_feeds_from_file(str(full_feeds))
+    elif starter_feeds.exists():
+        logger.info("Loading feeds from feeds-starter.txt (default)")
+        await load_feeds_from_file(str(starter_feeds))
+    else:
+        logger.warning("No feeds file found. Add feeds via API or create feeds.txt")
 
     # Start webhook background processor
     webhook_task = asyncio.create_task(process_webhooks_background())
