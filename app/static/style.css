@@ -1,17 +1,21 @@
-/* RSS Triage System Styles */
+/* RSS Triage System Styles - SYNTHWAVE EDITION */
 
 :root {
-    --primary-color: #2563eb;
-    --alert-color: #dc2626;
-    --digest-color: #059669;
+    --primary-color: #00f0ff;
+    --alert-color: #ff006e;
+    --digest-color: #8338ec;
     --skip-color: #6b7280;
-    --bg-color: #f8fafc;
-    --card-bg: #ffffff;
-    --text-primary: #1e293b;
-    --text-secondary: #64748b;
-    --border-color: #e2e8f0;
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    --bg-color: #0a0e27;
+    --card-bg: #1a1f3a;
+    --text-primary: #e0e7ff;
+    --text-secondary: #a5b4fc;
+    --border-color: #3730a3;
+    --shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+    --shadow-lg: 0 0 40px rgba(0, 240, 255, 0.3);
+    --neon-pink: #ff006e;
+    --neon-cyan: #00f0ff;
+    --neon-purple: #8338ec;
+    --grid-color: rgba(131, 56, 236, 0.1);
 }
 
 * {
@@ -23,6 +27,13 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background-color: var(--bg-color);
+    background-image:
+        linear-gradient(rgba(131, 56, 236, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(131, 56, 236, 0.05) 1px, transparent 1px),
+        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+    background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+    background-position: -1px -1px, -1px -1px, -1px -1px, -1px -1px;
     color: var(--text-primary);
     line-height: 1.6;
 }
@@ -43,13 +54,17 @@ header {
     border-radius: 12px;
     box-shadow: var(--shadow);
     margin-bottom: 24px;
+    border: 1px solid var(--border-color);
 }
 
 header h1 {
     font-size: 28px;
     font-weight: 700;
     margin-bottom: 12px;
-    color: var(--text-primary);
+    color: var(--neon-cyan);
+    text-shadow: 0 0 20px rgba(0, 240, 255, 0.6),
+                 0 0 40px rgba(0, 240, 255, 0.4);
+    letter-spacing: 0.05em;
 }
 
 .stats {
@@ -62,10 +77,12 @@ header h1 {
     display: inline-block;
     padding: 6px 12px;
     background: var(--primary-color);
-    color: white;
+    color: var(--bg-color);
     border-radius: 6px;
     font-size: 14px;
     font-weight: 600;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+    text-shadow: 0 0 10px rgba(10, 14, 39, 0.8);
 }
 
 .status-message {
@@ -135,6 +152,7 @@ main {
     border-radius: 12px;
     box-shadow: var(--shadow-lg);
     padding: 40px;
+    border: 1px solid var(--border-color);
 }
 
 .hidden {
@@ -194,6 +212,7 @@ main {
     margin-bottom: 20px;
     padding-bottom: 20px;
     border-bottom: 2px solid var(--border-color);
+    box-shadow: 0 2px 0 0 rgba(131, 56, 236, 0.3);
 }
 
 .item-header h2 {
@@ -202,6 +221,7 @@ main {
     margin-bottom: 12px;
     line-height: 1.3;
     color: var(--text-primary);
+    text-shadow: 0 0 10px rgba(224, 231, 255, 0.3);
 }
 
 .item-meta {
@@ -301,19 +321,25 @@ main {
 .btn-alert {
     background: var(--alert-color);
     color: white;
+    box-shadow: 0 0 20px rgba(255, 0, 110, 0.4);
 }
 
 .btn-alert:hover {
-    background: #b91c1c;
+    background: #ff1a7e;
+    box-shadow: 0 0 30px rgba(255, 0, 110, 0.6),
+                0 0 60px rgba(255, 0, 110, 0.3);
 }
 
 .btn-digest {
     background: var(--digest-color);
     color: white;
+    box-shadow: 0 0 20px rgba(131, 56, 236, 0.4);
 }
 
 .btn-digest:hover {
-    background: #047857;
+    background: #9d4edd;
+    box-shadow: 0 0 30px rgba(131, 56, 236, 0.6),
+                0 0 60px rgba(131, 56, 236, 0.3);
 }
 
 .btn-skip {
@@ -370,7 +396,8 @@ footer {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(10, 14, 39, 0.85);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -385,6 +412,7 @@ footer {
     max-width: 500px;
     width: 90%;
     box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-color);
 }
 
 .modal-content h3 {
@@ -412,13 +440,15 @@ kbd {
     display: inline-block;
     padding: 4px 8px;
     background: var(--bg-color);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--neon-cyan);
     border-radius: 4px;
     font-family: monospace;
     font-size: 14px;
     font-weight: 600;
     min-width: 32px;
     text-align: center;
+    color: var(--neon-cyan);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
 }
 
 /* Responsive */
