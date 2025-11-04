@@ -20,10 +20,19 @@ async def init_db():
                 last_fetched DATETIME,
                 last_error TEXT,
                 active BOOLEAN DEFAULT 1,
-                priority INTEGER DEFAULT 0,
+                priority INTEGER DEFAULT 5,
+                category TEXT DEFAULT 'RSS',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Migration: Add category column if it doesn't exist
+        try:
+            await db.execute("ALTER TABLE feeds ADD COLUMN category TEXT DEFAULT 'RSS'")
+            await db.commit()
+        except aiosqlite.OperationalError:
+            # Column already exists
+            pass
 
         # Items table
         await db.execute("""
@@ -85,13 +94,13 @@ async def get_db():
 
 
 # Feed management functions
-async def add_feed(url: str, name: Optional[str] = None, priority: int = 0) -> int:
+async def add_feed(url: str, name: Optional[str] = None, priority: int = 5, category: str = 'RSS') -> int:
     """Add a new RSS feed."""
     async with aiosqlite.connect(DATABASE_PATH) as db:
         db.row_factory = aiosqlite.Row
         cursor = await db.execute(
-            "INSERT INTO feeds (url, name, priority) VALUES (?, ?, ?)",
-            (url, name, priority)
+            "INSERT INTO feeds (url, name, priority, category) VALUES (?, ?, ?, ?)",
+            (url, name, priority, category)
         )
         await db.commit()
         return cursor.lastrowid
@@ -118,6 +127,35 @@ async def update_feed_status(feed_id: int, last_fetched: datetime, error: Option
             "UPDATE feeds SET last_fetched = ?, last_error = ? WHERE id = ?",
             (last_fetched.isoformat(), error, feed_id)
         )
+        await db.commit()
+
+
+async def update_feed(feed_id: int, name: Optional[str] = None, priority: Optional[int] = None, category: Optional[str] = None):
+    """Update feed properties."""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+
+        # Build update query dynamically based on what's being updated
+        updates = []
+        params = []
+
+        if name is not None:
+            updates.append("name = ?")
+            params.append(name)
+        if priority is not None:
+            updates.append("priority = ?")
+            params.append(priority)
+        if category is not None:
+            updates.append("category = ?")
+            params.append(category)
+
+        if not updates:
+            return  # Nothing to update
+
+        params.append(feed_id)
+        query = f"UPDATE feeds SET {', '.join(updates)} WHERE id = ?"
+
+        await db.execute(query, params)
         await db.commit()
 
 
@@ -161,15 +199,70 @@ async def get_next_item() -> Optional[Dict[str, Any]]:
     async with aiosqlite.connect(DATABASE_PATH) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute(
-            """SELECT i.*, f.name as feed_name, f.priority as feed_priority
+            """SELECT i.*, f.name as feed_name, f.priority as feed_priority, f.category as feed_category
             FROM items i
             JOIN feeds f ON i.feed_id = f.id
             WHERE i.status = 'pending'
-            ORDER BY f.priority DESC, i.published_date DESC
+            ORDER BY f.priority ASC, i.published_date DESC
             LIMIT 1"""
         ) as cursor:
             row = await cursor.fetchone()
             return dict(row) if row else None
+
+
+async def get_next_item_for_panel(panel: str) -> Optional[Dict[str, Any]]:
+    """Get next pending item for a specific panel.
+
+    Panels:
+    - 'priority1': Priority 1 RSS feeds only
+    - 'standard': Priority 2-5, RSS category
+    - 'social': Social category (all priorities)
+    """
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+
+        if panel == 'priority1':
+            where_clause = "i.status = 'pending' AND f.priority = 1 AND f.category = 'RSS'"
+        elif panel == 'standard':
+            where_clause = "i.status = 'pending' AND f.priority > 1 AND f.category = 'RSS'"
+        elif panel == 'social':
+            where_clause = "i.status = 'pending' AND f.category = 'Social'"
+        else:
+            return None
+
+        async with db.execute(
+            f"""SELECT i.*, f.name as feed_name, f.priority as feed_priority, f.category as feed_category
+            FROM items i
+            JOIN feeds f ON i.feed_id = f.id
+            WHERE {where_clause}
+            ORDER BY f.priority ASC, i.published_date DESC
+            LIMIT 1"""
+        ) as cursor:
+            row = await cursor.fetchone()
+            return dict(row) if row else None
+
+
+async def get_pending_count_for_panel(panel: str) -> int:
+    """Get count of pending items for a specific panel."""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+
+        if panel == 'priority1':
+            where_clause = "i.status = 'pending' AND f.priority = 1 AND f.category = 'RSS'"
+        elif panel == 'standard':
+            where_clause = "i.status = 'pending' AND f.priority > 1 AND f.category = 'RSS'"
+        elif panel == 'social':
+            where_clause = "i.status = 'pending' AND f.category = 'Social'"
+        else:
+            return 0
+
+        async with db.execute(
+            f"""SELECT COUNT(*) FROM items i
+            JOIN feeds f ON i.feed_id = f.id
+            WHERE {where_clause}"""
+        ) as cursor:
+            row = await cursor.fetchone()
+            return row[0]
 
 
 async def get_item_by_id(item_id: int) -> Optional[Dict[str, Any]]:

@@ -1,35 +1,41 @@
 # Kairos Starter Feed Pack
-# Curated threat intelligence feeds for demo and initial deployment
-# Format: URL|Name|Priority (0-10, higher = shown first)
+# Curated threat intelligence feeds for demo and cloud deployments
+# Format: URL|Name|Priority|Category
+# Priority: 1=most important, 5=least important
+# Category: RSS or Social
 
-# === Tier 1: Government CERTs (Priority 10) ===
-https://www.cisa.gov/cybersecurity-advisories/all.xml|CISA Cybersecurity Advisories|10
-https://www.ncsc.gov.uk/api/1/services/v1/all-rss-feed.xml|UK NCSC Advisories|10
-https://cert.europa.eu/publications/threat-intelligence-rss|CERT-EU Threat Intelligence|10
+# === PRIORITY 1: Government & CERT Advisories ===
+https://www.cisa.gov/cybersecurity-advisories/all.xml|CISA Cybersecurity Advisories|1|RSS
+https://www.cisa.gov/blog.xml|CISA Blog|1|RSS
+https://cert.europa.eu/publications/threat-intelligence-rss|CERT-EU Threat Intelligence|1|RSS
+https://www.ncsc.gov.uk/api/1/services/v1/all-rss-feed.xml|UK NCSC Advisories|1|RSS
+https://www.cyber.gov.au/rss/advisories|ACSC Advisories|1|RSS
+https://www.cyber.gov.au/rss/threats|ACSC Threats|1|RSS
+https://www.cyber.gov.au/rss/alerts|ACSC Alerts|1|RSS
+https://www.cyber.gov.au/rss/news|ACSC News|1|RSS
+https://www.cyber.gov.au/rss/publications|ACSC Publications|1|RSS
 
-# === Tier 2: CVE & Exploit Databases (Priority 9) ===
-https://www.exploit-db.com/rss.xml|Exploit-DB Updates|9
-https://packetstorm.news/rss/files|Packet Storm Security|9
-https://iscxml.sans.org/rssfeed.xml|SANS Internet Storm Center|9
+# === STANDARD: Vendor Threat Intelligence & Research ===
+https://www.tenable.com/blog/feed|Tenable Blog|3|RSS
+https://blogs.infoblox.com/feed/|Infoblox Blog|3|RSS
+https://www.group-ib.com/feed/blogfeed/|Group-IB Blog|3|RSS
+https://www.domaintools.com/feed/|DomainTools Blog|3|RSS
+https://feeds.feedburner.com/feedburner/Talos|Cisco Talos Blog|3|RSS
+https://www.talosintelligence.com/vulnerability_reports/feed|Talos Vulnerability Reports|3|RSS
+https://unit42.paloaltonetworks.com/feed/|Unit 42|3|RSS
+https://portswigger.net/research/rss|PortSwigger Research|3|RSS
+https://specterops.io/feed/|SpecterOps Blog|3|RSS
+https://www.rapid7.com/rss.xml|Rapid7 Blog|3|RSS
+https://iscxml.sans.org/rssfeed.xml|SANS Internet Storm Center|3|RSS
+https://labs.watchtowr.com/feed|watchTowr Labs|3|RSS
 
-# === Tier 3: Threat Research Labs (Priority 8) ===
-https://www.talosintelligence.com/vulnerability_reports/feed|Cisco Talos Vulnerabilities|8
-https://research.checkpoint.com/feed|Check Point Research|8
-https://thedfirreport.com/feed/|The DFIR Report|8
-
-# === Tier 4: Industry News & Analysis (Priority 7) ===
-https://feeds.feedburner.com/TheHackersNews|The Hacker's News|7
-https://www.bleepingcomputer.com/feed/|Bleeping Computer|7
-https://krebsonsecurity.com/feed/|Krebs on Security|7
-https://www.darkreading.com/rss.xml|Dark Reading|7
-https://www.securityweek.com/feed/|SecurityWeek|7
+# === SOCIAL MEDIA: Key Threat Intelligence Accounts ===
+https://cyberplace.social/@GossiTheDog.rss|@GossiTheDog@cyberplace.social|2|Social
 
 # This starter pack provides:
-# - 15 high-quality sources
-# - Government/CERT alerts for critical threats
-# - CVE/exploit tracking
-# - Vendor threat intelligence
-# - Security news for context
-# - Fast initial load (~30-60 seconds)
+# - 9 P1 feeds: Government/CERT critical alerts (CISA, NCSC, CERT-EU, ACSC)
+# - 12 standard feeds: Vendor threat intelligence and research
+# - 1 social feed: Kevin Beaumont (GossiTheDog) for fast-breaking intel
+# - Total: 22 high-quality sources
 #
-# Add more feeds via the API or by editing this file!
+# Add more feeds via the web UI (⚙️ Manage Feeds button)

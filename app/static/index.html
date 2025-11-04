@@ -19,69 +19,46 @@
                 <button id="skip-all-btn" class="btn-skip-all" onclick="skipAllItems()">
                     Skip All
                 </button>
+                <button id="manage-feeds-btn" class="btn-manage-feeds" onclick="showFeedManager()">
+                    ⚙️ Manage Feeds
+                </button>
                 <span id="status-message" class="status-message"></span>
             </div>
         </header>
 
         <main id="main-content">
-            <div id="loading-screen" class="loading-screen">
-                <div class="spinner"></div>
-                <p>Loading next item...</p>
-            </div>
-
-            <div id="no-items-screen" class="no-items-screen hidden">
-                <div class="empty-state">
-                    <h2>All Caught Up!</h2>
-                    <p>No pending items to review.</p>
-                    <button onclick="location.reload()" class="btn btn-primary">Refresh</button>
+            <!-- Priority 1 Panel -->
+            <section class="triage-panel" id="panel-priority1">
+                <div class="panel-header">
+                    <h2 class="panel-title">🔥 Priority 1</h2>
+                    <span class="panel-count" id="count-priority1">Loading...</span>
                 </div>
-            </div>
-
-            <div id="item-screen" class="item-screen hidden">
-                <article class="feed-item">
-                    <div class="item-header">
-                        <h2 id="item-title">Article Title</h2>
-                        <div class="item-meta">
-                            <span class="source" id="item-source">Source</span>
-                            <span class="separator">•</span>
-                            <span class="date" id="item-date">Date</span>
-                        </div>
-                    </div>
-
-                    <div class="item-body">
-                        <p id="item-summary">Article summary goes here...</p>
-                        <a id="item-link" href="#" target="_blank" class="read-more">Read full article →</a>
-                    </div>
-
-                    <div class="item-actions">
-                        <button id="btn-alert" class="btn btn-alert" onclick="triageItem('alert')">
-                            <span class="btn-icon">🚨</span>
-                            <span class="btn-text">Immediate Alert</span>
-                            <span class="btn-shortcut">A</span>
-                        </button>
-
-                        <button id="btn-digest" class="btn btn-digest" onclick="triageItem('digest')">
-                            <span class="btn-icon">📋</span>
-                            <span class="btn-text">Daily Digest</span>
-                            <span class="btn-shortcut">D</span>
-                        </button>
-
-                        <button id="btn-skip" class="btn btn-skip" onclick="triageItem('skip')">
-                            <span class="btn-icon">⏭️</span>
-                            <span class="btn-text">Skip</span>
-                            <span class="btn-shortcut">S</span>
-                        </button>
-                    </div>
-                </article>
-            </div>
-
-            <div id="error-screen" class="error-screen hidden">
-                <div class="error-state">
-                    <h2>Error</h2>
-                    <p id="error-message">Something went wrong</p>
-                    <button onclick="location.reload()" class="btn btn-primary">Retry</button>
+                <div class="panel-content" id="content-priority1">
+                    <!-- Item will be loaded here -->
                 </div>
-            </div>
+            </section>
+
+            <!-- Standard RSS Panel -->
+            <section class="triage-panel" id="panel-standard">
+                <div class="panel-header">
+                    <h2 class="panel-title">📰 Standard Feeds</h2>
+                    <span class="panel-count" id="count-standard">Loading...</span>
+                </div>
+                <div class="panel-content" id="content-standard">
+                    <!-- Item will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Social Media Panel -->
+            <section class="triage-panel" id="panel-social">
+                <div class="panel-header">
+                    <h2 class="panel-title">🐘 Social Media</h2>
+                    <span class="panel-count" id="count-social">Loading...</span>
+                </div>
+                <div class="panel-content" id="content-social">
+                    <!-- Item will be loaded here -->
+                </div>
+            </section>
         </main>
 
         <footer>
@@ -126,6 +103,65 @@
                 </div>
             </div>
             <button onclick="hideHelp()" class="btn btn-primary">Close</button>
+        </div>
+    </div>
+
+    <!-- Feed Management Modal -->
+    <div id="feed-modal" class="modal hidden">
+        <div class="modal-content modal-wide">
+            <div class="modal-header">
+                <h3>Manage RSS Feeds</h3>
+                <button onclick="hideFeedManager()" class="btn-close">&times;</button>
+            </div>
+
+            <!-- Add Mastodon User Form -->
+            <div class="feed-form">
+                <h4>Add Mastodon User</h4>
+                <form id="add-mastodon-form" onsubmit="addMastodonUser(event)">
+                    <div class="form-group">
+                        <label for="mastodon-handle">Mastodon Handle *</label>
+                        <input type="text" id="mastodon-handle" placeholder="@username@instance.social" required>
+                        <small>Example: @GossiTheDog@cyberplace.social</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="mastodon-priority">Priority (1-5)</label>
+                        <input type="number" id="mastodon-priority" min="1" max="5" value="3">
+                        <small>1 = most important, 5 = least important</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Mastodon User</button>
+                </form>
+            </div>
+
+            <!-- Add RSS Feed Form -->
+            <div class="feed-form">
+                <h4>Add RSS Feed</h4>
+                <form id="add-feed-form" onsubmit="addFeed(event)">
+                    <div class="form-group">
+                        <label for="feed-url">Feed URL *</label>
+                        <input type="url" id="feed-url" placeholder="https://example.com/feed.xml" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="feed-name">Feed Name (optional)</label>
+                        <input type="text" id="feed-name" placeholder="Will auto-detect if empty">
+                    </div>
+                    <div class="form-group">
+                        <label for="feed-priority">Priority (1-5)</label>
+                        <input type="number" id="feed-priority" min="1" max="5" value="3">
+                        <small>1 = most important, 5 = least important</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add RSS Feed</button>
+                </form>
+            </div>
+
+            <!-- Feed List -->
+            <div class="feed-list-container">
+                <h4>Current Feeds</h4>
+                <div id="feed-list-loading" class="loading-inline">
+                    <div class="spinner-small"></div>
+                    <span>Loading feeds...</span>
+                </div>
+                <div id="feed-list" class="feed-list"></div>
+            </div>
         </div>
     </div>
 

@@ -34,7 +34,8 @@ logger = logging.getLogger(__name__)
 class FeedCreate(BaseModel):
     url: HttpUrl
     name: Optional[str] = None
-    priority: int = 0
+    priority: int = 5
+    category: str = 'RSS'
 
 
 class TriageAction(BaseModel):
@@ -194,8 +195,18 @@ async def list_feeds(auth: bool = Depends(verify_auth)):
 async def add_feed(feed: FeedCreate, auth: bool = Depends(verify_auth)):
     """Add a new feed."""
     try:
-        feed_id = await database.add_feed(str(feed.url), feed.name, feed.priority)
+        feed_id = await database.add_feed(str(feed.url), feed.name, feed.priority, feed.category)
         return {"id": feed_id, "message": "Feed added successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.put("/api/feeds/{feed_id}")
+async def update_feed(feed_id: int, feed: FeedCreate, auth: bool = Depends(verify_auth)):
+    """Update a feed."""
+    try:
+        await database.update_feed(feed_id, feed.name, feed.priority, feed.category)
+        return {"message": "Feed updated successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -227,6 +238,25 @@ async def get_next_item(auth: bool = Depends(verify_auth)):
         return {"item": None, "remaining": 0}
 
     remaining = await database.get_pending_count()
+
+    return {
+        "item": item,
+        "remaining": remaining
+    }
+
+
+@app.get("/api/items/next/{panel}")
+async def get_next_item_for_panel(panel: str, auth: bool = Depends(verify_auth)):
+    """Get next item for a specific panel (priority1, standard, social)."""
+    if panel not in ['priority1', 'standard', 'social']:
+        raise HTTPException(status_code=400, detail="Invalid panel name")
+
+    item = await database.get_next_item_for_panel(panel)
+
+    if not item:
+        return {"item": None, "remaining": 0}
+
+    remaining = await database.get_pending_count_for_panel(panel)
 
     return {
         "item": item,

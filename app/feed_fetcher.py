@@ -234,14 +234,15 @@ async def load_feeds_from_file(file_path: str):
             if not line or line.startswith('#'):
                 continue
 
-            # Parse line (format: URL or URL|Name or URL|Name|Priority)
+            # Parse line (format: URL or URL|Name or URL|Name|Priority or URL|Name|Priority|Category)
             parts = line.split('|')
             url = parts[0].strip()
             name = parts[1].strip() if len(parts) > 1 else None
-            priority = int(parts[2].strip()) if len(parts) > 2 else 0
+            priority = int(parts[2].strip()) if len(parts) > 2 else 5
+            category = parts[3].strip() if len(parts) > 3 else 'RSS'
 
             try:
-                await add_feed(url, name, priority)
+                await add_feed(url, name, priority, category)
                 logger.info(f"Added feed: {name or url}")
             except Exception as e:
                 logger.error(f"Failed to add feed {url}: {e}")
