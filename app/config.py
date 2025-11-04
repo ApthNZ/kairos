@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     # Feed fetching
     FEED_REFRESH_MINUTES: int = 15
     MAX_ITEMS_PER_FEED: int = 50
-    FEED_PARALLEL_WORKERS: int = 5
+    FEED_PARALLEL_WORKERS: int = 1
     FEED_TIMEOUT_SECONDS: int = 30
 
     # Webhook
