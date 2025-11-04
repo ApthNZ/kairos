@@ -182,9 +182,10 @@ async def fetch_all_feeds() -> Dict[str, Any]:
         }
 
     # Create HTTP client with connection pooling
+    # Use browser User-Agent to avoid bot detection (some feeds use Akamai Bot Manager)
     async with httpx.AsyncClient(
         limits=httpx.Limits(max_connections=settings.FEED_PARALLEL_WORKERS),
-        headers={'User-Agent': 'RSS-Triage-System/1.0'}
+        headers={'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0'}
     ) as client:
         # Fetch feeds in parallel with semaphore to limit concurrency
         semaphore = asyncio.Semaphore(settings.FEED_PARALLEL_WORKERS)

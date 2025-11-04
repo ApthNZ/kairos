@@ -5,15 +5,19 @@
 # Category: RSS or Social
 
 # === PRIORITY 1: Government & CERT Advisories ===
-https://www.cisa.gov/cybersecurity-advisories/all.xml|CISA Cybersecurity Advisories|1|RSS
-https://www.cisa.gov/blog.xml|CISA Blog|1|RSS
 https://cert.europa.eu/publications/threat-intelligence-rss|CERT-EU Threat Intelligence|1|RSS
 https://www.ncsc.gov.uk/api/1/services/v1/all-rss-feed.xml|UK NCSC Advisories|1|RSS
-https://www.cyber.gov.au/rss/advisories|ACSC Advisories|1|RSS
-https://www.cyber.gov.au/rss/threats|ACSC Threats|1|RSS
-https://www.cyber.gov.au/rss/alerts|ACSC Alerts|1|RSS
-https://www.cyber.gov.au/rss/news|ACSC News|1|RSS
-https://www.cyber.gov.au/rss/publications|ACSC Publications|1|RSS
+
+# CISA and ACSC feeds are behind aggressive bot protection (Akamai Bot Manager)
+# SANS has SSL/TLS handshake issues. All work in browsers but timeout for RSS readers.
+# Add manually via web UI if needed.
+# https://www.cisa.gov/cybersecurity-advisories/all.xml|CISA Cybersecurity Advisories|1|RSS
+# https://www.cisa.gov/blog.xml|CISA Blog|1|RSS
+# https://www.cyber.gov.au/rss/advisories|ACSC Advisories|1|RSS
+# https://www.cyber.gov.au/rss/threats|ACSC Threats|1|RSS
+# https://www.cyber.gov.au/rss/alerts|ACSC Alerts|1|RSS
+# https://www.cyber.gov.au/rss/news|ACSC News|1|RSS
+# https://www.cyber.gov.au/rss/publications|ACSC Publications|1|RSS
 
 # === STANDARD: Vendor Threat Intelligence & Research ===
 https://www.tenable.com/blog/feed|Tenable Blog|3|RSS
@@ -26,16 +30,17 @@ https://unit42.paloaltonetworks.com/feed/|Unit 42|3|RSS
 https://portswigger.net/research/rss|PortSwigger Research|3|RSS
 https://specterops.io/feed/|SpecterOps Blog|3|RSS
 https://www.rapid7.com/rss.xml|Rapid7 Blog|3|RSS
-https://iscxml.sans.org/rssfeed.xml|SANS Internet Storm Center|3|RSS
 https://labs.watchtowr.com/feed|watchTowr Labs|3|RSS
+# https://iscxml.sans.org/rssfeed.xml|SANS Internet Storm Center|3|RSS
 
 # === SOCIAL MEDIA: Key Threat Intelligence Accounts ===
 https://cyberplace.social/@GossiTheDog.rss|@GossiTheDog@cyberplace.social|2|Social
 
 # This starter pack provides:
-# - 9 P1 feeds: Government/CERT critical alerts (CISA, NCSC, CERT-EU, ACSC)
-# - 12 standard feeds: Vendor threat intelligence and research
+# - 2 P1 feeds: Government/CERT critical alerts (CERT-EU, UK NCSC)
+# - 11 standard feeds: Vendor threat intelligence and research
 # - 1 social feed: Kevin Beaumont (GossiTheDog) for fast-breaking intel
-# - Total: 22 high-quality sources
+# - Total: 14 high-quality sources
 #
+# Note: CISA, ACSC, and SANS feeds are commented out due to bot blocking/SSL issues
 # Add more feeds via the web UI (⚙️ Manage Feeds button)
