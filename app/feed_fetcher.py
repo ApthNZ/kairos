@@ -15,6 +15,7 @@ from database import (
     get_stats
 )
 from config import settings
+from url_validator import validate_feed_url, URLValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -69,11 +70,25 @@ async def fetch_single_feed(feed: Dict[str, Any], client: httpx.AsyncClient) -> 
     logger.info(f"Fetching feed: {feed_name}")
 
     try:
-        # Fetch with timeout
+        # Validate URL to prevent SSRF
+        try:
+            validated_url = validate_feed_url(feed_url)
+        except URLValidationError as e:
+            error_msg = f"URL validation failed: {e}"
+            logger.error(f"Feed URL validation failed for {feed_name}: {error_msg}")
+            await update_feed_status(feed_id, datetime.now(timezone.utc), error_msg)
+            return {
+                'feed_id': feed_id,
+                'feed_name': feed_name,
+                'items_added': 0,
+                'error': error_msg
+            }
+
+        # Fetch with timeout (disable redirects to prevent redirect-based SSRF)
         response = await client.get(
-            feed_url,
+            validated_url,
             timeout=settings.FEED_TIMEOUT_SECONDS,
-            follow_redirects=True
+            follow_redirects=False
         )
         response.raise_for_status()
 

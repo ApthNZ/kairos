@@ -13,8 +13,20 @@ from database import (
     get_item_by_id
 )
 from config import settings
+from url_validator import validate_url, URLValidationError
 
 logger = logging.getLogger(__name__)
+
+# Validate webhook URL on module load
+_webhook_validated = False
+if settings.WEBHOOK_URL:
+    try:
+        validate_url(settings.WEBHOOK_URL, purpose="webhook")
+        _webhook_validated = True
+        logger.info("Webhook URL validated successfully")
+    except URLValidationError as e:
+        logger.error(f"Webhook URL validation failed: {e}")
+        logger.error("Webhooks will be disabled due to invalid URL")
 
 
 async def queue_webhook(item_id: int, triaged_by: str) -> int:
@@ -64,6 +76,12 @@ async def send_webhook(webhook_id: int, payload: Dict[str, Any], attempts: int) 
     if not settings.WEBHOOK_URL:
         logger.warning("WEBHOOK_URL not configured, skipping webhook")
         await update_webhook_status(webhook_id, 'skipped', 'WEBHOOK_URL not configured')
+        return False
+
+    # Check if webhook URL passed validation on startup
+    if not _webhook_validated:
+        logger.warning("Webhook URL failed validation, skipping webhook")
+        await update_webhook_status(webhook_id, 'skipped', 'Webhook URL failed security validation')
         return False
 
     # Calculate backoff delay (exponential: 1s, 2s, 4s, etc.)
