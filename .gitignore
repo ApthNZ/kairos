@@ -43,3 +43,4 @@ Thumbs.db
 
 # Docker
 .dockerignore
+.env.backup*
