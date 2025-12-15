@@ -5,7 +5,7 @@ python-dateutil==2.9.0.post0
 httpx==0.28.1
 aiosqlite==0.20.0
 pydantic==2.10.4
-pydantic-settings==2.6.1
-apscheduler==3.10.4
+pydantic-settings==2.7.0
+apscheduler==3.11.0
 bleach==6.2.0
 python-multipart==0.0.19
