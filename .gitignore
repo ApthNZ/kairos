@@ -24,8 +24,8 @@ ENV/
 
 # Environment variables (may contain secrets)
 .env
-.env.local
-.env.production
+.env.*
+!.env.example
 
 # IDE
 .vscode/
@@ -43,4 +43,3 @@ Thumbs.db
 
 # Docker
 .dockerignore
-.env.backup*
