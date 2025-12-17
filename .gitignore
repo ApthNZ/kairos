@@ -27,6 +27,13 @@ ENV/
 .env.*
 !.env.example
 
+# Security - sensitive file patterns
+*.key
+*.pem
+*.p12
+credentials*
+secrets*
+
 # IDE
 .vscode/
 .idea/
