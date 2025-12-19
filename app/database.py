@@ -221,23 +221,35 @@ async def get_next_item_for_panel(panel: str) -> Optional[Dict[str, Any]]:
     async with aiosqlite.connect(DATABASE_PATH) as db:
         db.row_factory = aiosqlite.Row
 
+        # Use parameterized queries to prevent SQL injection
         if panel == 'priority1':
-            where_clause = "i.status = 'pending' AND f.priority = 1 AND f.category = 'RSS'"
+            query = """SELECT i.*, f.name as feed_name, f.priority as feed_priority, f.category as feed_category
+                FROM items i
+                JOIN feeds f ON i.feed_id = f.id
+                WHERE i.status = ? AND f.priority = ? AND f.category = ?
+                ORDER BY f.priority ASC, i.published_date DESC
+                LIMIT 1"""
+            params = ('pending', 1, 'RSS')
         elif panel == 'standard':
-            where_clause = "i.status = 'pending' AND f.priority > 1 AND f.category = 'RSS'"
+            query = """SELECT i.*, f.name as feed_name, f.priority as feed_priority, f.category as feed_category
+                FROM items i
+                JOIN feeds f ON i.feed_id = f.id
+                WHERE i.status = ? AND f.priority > ? AND f.category = ?
+                ORDER BY f.priority ASC, i.published_date DESC
+                LIMIT 1"""
+            params = ('pending', 1, 'RSS')
         elif panel == 'social':
-            where_clause = "i.status = 'pending' AND f.category = 'Social'"
+            query = """SELECT i.*, f.name as feed_name, f.priority as feed_priority, f.category as feed_category
+                FROM items i
+                JOIN feeds f ON i.feed_id = f.id
+                WHERE i.status = ? AND f.category = ?
+                ORDER BY f.priority ASC, i.published_date DESC
+                LIMIT 1"""
+            params = ('pending', 'Social')
         else:
             return None
 
-        async with db.execute(
-            f"""SELECT i.*, f.name as feed_name, f.priority as feed_priority, f.category as feed_category
-            FROM items i
-            JOIN feeds f ON i.feed_id = f.id
-            WHERE {where_clause}
-            ORDER BY f.priority ASC, i.published_date DESC
-            LIMIT 1"""
-        ) as cursor:
+        async with db.execute(query, params) as cursor:
             row = await cursor.fetchone()
             return dict(row) if row else None
 
@@ -247,20 +259,26 @@ async def get_pending_count_for_panel(panel: str) -> int:
     async with aiosqlite.connect(DATABASE_PATH) as db:
         db.row_factory = aiosqlite.Row
 
+        # Use parameterized queries to prevent SQL injection
         if panel == 'priority1':
-            where_clause = "i.status = 'pending' AND f.priority = 1 AND f.category = 'RSS'"
+            query = """SELECT COUNT(*) FROM items i
+                JOIN feeds f ON i.feed_id = f.id
+                WHERE i.status = ? AND f.priority = ? AND f.category = ?"""
+            params = ('pending', 1, 'RSS')
         elif panel == 'standard':
-            where_clause = "i.status = 'pending' AND f.priority > 1 AND f.category = 'RSS'"
+            query = """SELECT COUNT(*) FROM items i
+                JOIN feeds f ON i.feed_id = f.id
+                WHERE i.status = ? AND f.priority > ? AND f.category = ?"""
+            params = ('pending', 1, 'RSS')
         elif panel == 'social':
-            where_clause = "i.status = 'pending' AND f.category = 'Social'"
+            query = """SELECT COUNT(*) FROM items i
+                JOIN feeds f ON i.feed_id = f.id
+                WHERE i.status = ? AND f.category = ?"""
+            params = ('pending', 'Social')
         else:
             return 0
 
-        async with db.execute(
-            f"""SELECT COUNT(*) FROM items i
-            JOIN feeds f ON i.feed_id = f.id
-            WHERE {where_clause}"""
-        ) as cursor:
+        async with db.execute(query, params) as cursor:
             row = await cursor.fetchone()
             return row[0]
 
