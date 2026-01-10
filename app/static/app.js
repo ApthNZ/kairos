@@ -2,6 +2,7 @@
 
 // State
 let authToken = null;
+let currentUser = null;
 let isProcessing = false;
 let lastAction = null; // Track last action for undo: {itemId, action}
 let panelData = {
@@ -11,7 +12,15 @@ let panelData = {
 };
 
 // Check for auth token in localStorage
-authToken = localStorage.getItem('rss_triage_token');
+authToken = localStorage.getItem('kairos_token');
+const storedUser = localStorage.getItem('kairos_user');
+if (storedUser) {
+    try {
+        currentUser = JSON.parse(storedUser);
+    } catch (e) {
+        currentUser = null;
+    }
+}
 
 // Elements
 const helpModal = document.getElementById('help-modal');
@@ -40,16 +49,11 @@ async function apiCall(endpoint, options = {}) {
     });
 
     if (response.status === 401) {
-        // Auth required
-        const token = prompt('Enter authentication token:');
-        if (token) {
-            authToken = token;
-            localStorage.setItem('rss_triage_token', token);
-            // Retry request
-            return apiCall(endpoint, options);
-        } else {
-            throw new Error('Authentication required');
-        }
+        // Auth required - redirect to login
+        localStorage.removeItem('kairos_token');
+        localStorage.removeItem('kairos_user');
+        window.location.href = '/login.html';
+        throw new Error('Authentication required');
     }
 
     if (!response.ok) {
@@ -58,6 +62,26 @@ async function apiCall(endpoint, options = {}) {
     }
 
     return response.json();
+}
+
+// Logout function
+async function logout() {
+    try {
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: getAuthHeaders()
+        });
+    } catch (e) {
+        // Ignore errors during logout
+    }
+    localStorage.removeItem('kairos_token');
+    localStorage.removeItem('kairos_user');
+    window.location.href = '/login.html';
+}
+
+// Get current user info
+function getCurrentUser() {
+    return currentUser;
 }
 
 // Panel item rendering
@@ -665,8 +689,75 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// Initialize user display in header
+function initUserDisplay() {
+    const header = document.querySelector('header');
+    const statsDiv = header.querySelector('.stats');
+
+    // Create user info element
+    const userInfo = document.createElement('div');
+    userInfo.className = 'user-info';
+
+    if (currentUser) {
+        userInfo.innerHTML = `
+            <span class="user-name">${escapeHtml(currentUser.username)}</span>
+            ${currentUser.role === 'admin' ? '<span class="admin-badge">Admin</span>' : ''}
+            <button class="btn-logout" onclick="logout()" title="Sign out">Logout</button>
+        `;
+        // Add admin link if admin
+        if (currentUser.role === 'admin') {
+            const adminLink = document.createElement('a');
+            adminLink.href = '/admin.html';
+            adminLink.className = 'btn-admin';
+            adminLink.textContent = 'Admin';
+            userInfo.insertBefore(adminLink, userInfo.querySelector('.btn-logout'));
+        }
+    }
+
+    // Insert user info before stats
+    statsDiv.insertBefore(userInfo, statsDiv.firstChild);
+}
+
+// Check authentication and redirect if needed
+async function checkAuth() {
+    if (!authToken) {
+        window.location.href = '/login.html';
+        return false;
+    }
+
+    try {
+        const userData = await apiCall('/api/auth/me');
+        currentUser = userData;
+        localStorage.setItem('kairos_user', JSON.stringify(userData));
+        return true;
+    } catch (error) {
+        // apiCall will redirect to login on 401
+        return false;
+    }
+}
+
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check auth first
+    if (!authToken) {
+        window.location.href = '/login.html';
+        return;
+    }
+
+    // Verify token is valid
+    try {
+        const userData = await apiCall('/api/auth/me');
+        currentUser = userData;
+        localStorage.setItem('kairos_user', JSON.stringify(userData));
+    } catch (error) {
+        // Will be redirected to login
+        return;
+    }
+
+    // Set up user display
+    initUserDisplay();
+
+    // Load panels
     loadAllPanels();
 
     // Refresh panels periodically

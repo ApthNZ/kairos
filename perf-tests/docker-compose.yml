@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  perf-tests:
+    build: .
+    container_name: kairos-perf-tests
+    environment:
+      - KAIROS_URL=${KAIROS_URL:-http://host.docker.internal:8000}
+      - TEST_USERNAME=${TEST_USERNAME:-perftest}
+      - TEST_PASSWORD=${TEST_PASSWORD:-perftest123}
+      - PERF_ITERATIONS=${PERF_ITERATIONS:-5}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./reports:/app/reports
+    network_mode: bridge
+    profiles:
+      - testing
+
+  # Optional: Run with the main Kairos app
+  kairos:
+    build: ..
+    container_name: kairos-app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_PATH=/data/kairos.db
+    volumes:
+      - ../data:/data
+    profiles:
+      - full
+
+# Usage:
+# 1. Run performance tests against existing Kairos instance:
+#    KAIROS_URL=http://your-kairos-host:8000 docker-compose --profile testing up
+#
+# 2. Run full stack (Kairos + perf tests):
+#    docker-compose --profile full --profile testing up
+#
+# 3. Run tests with custom settings:
+#    PERF_ITERATIONS=10 docker-compose --profile testing up

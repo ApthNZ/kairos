@@ -50,3 +50,6 @@ Thumbs.db
 
 # Docker
 .dockerignore
+
+# Performance test reports
+perf-tests/reports/

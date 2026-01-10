@@ -4,12 +4,12 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 
-from fastapi import FastAPI, HTTPException, Depends, Header, Response
+from fastapi import FastAPI, HTTPException, Depends, Header, Response, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel, HttpUrl
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
+from pydantic import BaseModel, HttpUrl, EmailStr, Field
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
@@ -49,25 +49,102 @@ class HealthResponse(BaseModel):
     pending_items: int
 
 
+# Auth models
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    token: str
+    user: Dict[str, Any]
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=8)
+
+
+class UserCreate(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    role: str = Field(default='analyst', pattern='^(analyst|admin)$')
+
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = Field(None, min_length=3, max_length=50)
+    email: Optional[EmailStr] = None
+    role: Optional[str] = Field(None, pattern='^(analyst|admin)$')
+    active: Optional[bool] = None
+
+
+class ResetPasswordRequest(BaseModel):
+    new_password: str = Field(..., min_length=8)
+
+
 # Global scheduler
 scheduler = AsyncIOScheduler()
 
 
-# Authentication dependency
+# Authentication dependencies
+async def get_current_user(authorization: Optional[str] = Header(None)) -> Dict[str, Any]:
+    """Get current authenticated user from session token."""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header required")
+
+    # Support both "Bearer <token>" and plain token
+    token = authorization
+    if authorization.startswith("Bearer "):
+        token = authorization[7:]
+
+    # Check for legacy single-token auth
+    if settings.AUTH_TOKEN and token == settings.AUTH_TOKEN:
+        # Return a pseudo-user for legacy auth compatibility
+        return {
+            'id': 0,
+            'username': settings.USER_IDENTIFIER,
+            'role': 'admin',
+            'active': 1
+        }
+
+    # Session-based auth
+    session = await database.get_session_by_token(token)
+    if not session:
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+
+    if session['expires_at'] < datetime.utcnow():
+        await database.delete_session(token)
+        raise HTTPException(status_code=401, detail="Session expired")
+
+    user = await database.get_user_by_id(session['user_id'])
+    if not user or not user['active']:
+        raise HTTPException(status_code=401, detail="User inactive or not found")
+
+    return user
+
+
+async def get_current_user_optional(authorization: Optional[str] = Header(None)) -> Optional[Dict[str, Any]]:
+    """Get current user if authenticated, None otherwise."""
+    if not authorization:
+        return None
+    try:
+        return await get_current_user(authorization)
+    except HTTPException:
+        return None
+
+
+async def require_admin(user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    """Require admin role for access."""
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
+
+# Legacy auth compatibility
 async def verify_auth(authorization: Optional[str] = Header(None)):
-    """Verify authentication token if configured."""
-    if settings.AUTH_TOKEN:
-        if not authorization:
-            raise HTTPException(status_code=401, detail="Authorization header required")
-
-        # Support both "Bearer <token>" and plain token
-        token = authorization
-        if authorization.startswith("Bearer "):
-            token = authorization[7:]
-
-        if token != settings.AUTH_TOKEN:
-            raise HTTPException(status_code=401, detail="Invalid authentication token")
-
+    """Verify authentication - legacy wrapper."""
+    await get_current_user(authorization)
     return True
 
 
@@ -117,6 +194,16 @@ async def lifespan(app: FastAPI):
         trigger=digest_trigger,
         id='digest_generator',
         name='Generate Daily Digest',
+        replace_existing=True
+    )
+
+    # Schedule session cleanup (hourly)
+    session_trigger = IntervalTrigger(hours=1)
+    scheduler.add_job(
+        database.cleanup_expired_sessions,
+        trigger=session_trigger,
+        id='session_cleanup',
+        name='Cleanup Expired Sessions',
         replace_existing=True
     )
 
@@ -181,6 +268,289 @@ async def get_metrics():
         "next_digest": scheduler.get_job('digest_generator').next_run_time.isoformat()
         if scheduler.get_job('digest_generator') else None
     }
+
+
+# Authentication endpoints
+@app.post("/api/auth/login")
+async def login(request: Request, credentials: LoginRequest):
+    """Authenticate user and create session."""
+    user = await database.authenticate_user(credentials.username, credentials.password)
+
+    if not user:
+        # Generic error to prevent user enumeration
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    # Create session
+    ip_address = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
+    token = await database.create_session(
+        user['id'],
+        settings.SESSION_EXPIRY_HOURS,
+        ip_address,
+        user_agent
+    )
+
+    # Update last login
+    await database.update_user_last_login(user['id'])
+
+    # Log login action
+    await database.log_action(user['id'], 'login', details={'ip': ip_address})
+
+    # Return token and user info (without password hash)
+    return {
+        "token": token,
+        "user": {
+            "id": user['id'],
+            "username": user['username'],
+            "email": user['email'],
+            "role": user['role']
+        }
+    }
+
+
+@app.post("/api/auth/logout")
+async def logout(
+    authorization: Optional[str] = Header(None),
+    user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Logout and invalidate session."""
+    if authorization:
+        token = authorization.replace("Bearer ", "") if authorization.startswith("Bearer ") else authorization
+        await database.delete_session(token)
+
+    # Log logout action
+    if user['id'] != 0:  # Don't log for legacy auth
+        await database.log_action(user['id'], 'logout')
+
+    return {"message": "Logged out successfully"}
+
+
+@app.get("/api/auth/me")
+async def get_current_user_info(user: Dict[str, Any] = Depends(get_current_user)):
+    """Get current authenticated user info."""
+    if user['id'] == 0:
+        # Legacy auth user
+        return {
+            "id": 0,
+            "username": user['username'],
+            "role": user['role'],
+            "legacy_auth": True
+        }
+
+    # Full user from database
+    full_user = await database.get_user_by_id(user['id'])
+    return {
+        "id": full_user['id'],
+        "username": full_user['username'],
+        "email": full_user['email'],
+        "role": full_user['role'],
+        "created_at": full_user['created_at'],
+        "last_login": full_user['last_login']
+    }
+
+
+@app.post("/api/auth/change-password")
+async def change_password(
+    request: ChangePasswordRequest,
+    user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Change current user's password."""
+    if user['id'] == 0:
+        raise HTTPException(status_code=400, detail="Cannot change password for legacy auth")
+
+    # Verify current password
+    db_user = await database.get_user_by_id(user['id'])
+    if not database.verify_password(request.current_password, db_user['password_hash']):
+        raise HTTPException(status_code=401, detail="Current password is incorrect")
+
+    # Update password
+    await database.update_user_password(user['id'], request.new_password)
+
+    # Log password change
+    await database.log_action(user['id'], 'password_change')
+
+    return {"message": "Password changed successfully"}
+
+
+# Admin user management endpoints
+@app.get("/api/admin/users")
+async def list_users(admin: Dict[str, Any] = Depends(require_admin)):
+    """List all users (admin only)."""
+    users = await database.get_all_users()
+    return {"users": users}
+
+
+@app.post("/api/admin/users")
+async def create_user(
+    user_data: UserCreate,
+    admin: Dict[str, Any] = Depends(require_admin)
+):
+    """Create a new user (admin only)."""
+    # Check for existing username/email
+    existing = await database.get_user_by_username(user_data.username)
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already exists")
+
+    try:
+        user_id = await database.create_user(
+            user_data.username,
+            user_data.email,
+            user_data.password,
+            user_data.role
+        )
+
+        # Log admin action
+        await database.log_action(
+            admin['id'],
+            'user_created',
+            details={'created_user_id': user_id, 'username': user_data.username}
+        )
+
+        return {"id": user_id, "message": "User created successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.put("/api/admin/users/{user_id}")
+async def update_user_admin(
+    user_id: int,
+    user_data: UserUpdate,
+    admin: Dict[str, Any] = Depends(require_admin)
+):
+    """Update a user (admin only)."""
+    # Don't allow modifying legacy auth user
+    if user_id == 0:
+        raise HTTPException(status_code=400, detail="Cannot modify legacy auth user")
+
+    # Check user exists
+    existing = await database.get_user_by_id(user_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Update user
+    await database.update_user(
+        user_id,
+        username=user_data.username,
+        email=user_data.email,
+        role=user_data.role,
+        active=user_data.active
+    )
+
+    # If deactivating, invalidate their sessions
+    if user_data.active is False:
+        await database.delete_user_sessions(user_id)
+
+    # Log admin action
+    await database.log_action(
+        admin['id'],
+        'user_updated',
+        details={'updated_user_id': user_id, 'changes': user_data.model_dump(exclude_unset=True)}
+    )
+
+    return {"message": "User updated successfully"}
+
+
+@app.delete("/api/admin/users/{user_id}")
+async def deactivate_user(
+    user_id: int,
+    admin: Dict[str, Any] = Depends(require_admin)
+):
+    """Deactivate a user (soft delete, admin only)."""
+    if user_id == 0:
+        raise HTTPException(status_code=400, detail="Cannot deactivate legacy auth user")
+
+    # Don't allow self-deactivation
+    if user_id == admin['id']:
+        raise HTTPException(status_code=400, detail="Cannot deactivate yourself")
+
+    existing = await database.get_user_by_id(user_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    await database.update_user(user_id, active=False)
+    await database.delete_user_sessions(user_id)
+
+    # Log admin action
+    await database.log_action(
+        admin['id'],
+        'user_deactivated',
+        details={'deactivated_user_id': user_id, 'username': existing['username']}
+    )
+
+    return {"message": "User deactivated successfully"}
+
+
+@app.post("/api/admin/users/{user_id}/reset-password")
+async def reset_user_password(
+    user_id: int,
+    request: ResetPasswordRequest,
+    admin: Dict[str, Any] = Depends(require_admin)
+):
+    """Reset a user's password (admin only)."""
+    if user_id == 0:
+        raise HTTPException(status_code=400, detail="Cannot reset password for legacy auth user")
+
+    existing = await database.get_user_by_id(user_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    await database.update_user_password(user_id, request.new_password)
+
+    # Invalidate existing sessions so they need to re-login
+    await database.delete_user_sessions(user_id)
+
+    # Log admin action
+    await database.log_action(
+        admin['id'],
+        'password_reset',
+        details={'reset_user_id': user_id, 'username': existing['username']}
+    )
+
+    return {"message": "Password reset successfully"}
+
+
+# Admin dashboard endpoints
+@app.get("/api/admin/stats")
+async def get_admin_stats(
+    days: int = 30,
+    admin: Dict[str, Any] = Depends(require_admin)
+):
+    """Get user contribution statistics (admin only)."""
+    user_stats = await database.get_all_user_stats(days)
+
+    # Calculate totals
+    totals = {
+        'alerted': sum(u['stats']['alerted'] for u in user_stats),
+        'digested': sum(u['stats']['digested'] for u in user_stats),
+        'skipped': sum(u['stats']['skipped'] for u in user_stats),
+        'total': sum(u['stats']['total'] for u in user_stats)
+    }
+
+    return {
+        "period_days": days,
+        "users": user_stats,
+        "totals": totals
+    }
+
+
+@app.get("/api/admin/stats/daily")
+async def get_daily_stats(
+    days: int = 30,
+    admin: Dict[str, Any] = Depends(require_admin)
+):
+    """Get daily triage statistics (admin only)."""
+    stats = await database.get_daily_stats(days)
+    return {"period_days": days, "daily": stats}
+
+
+@app.get("/api/admin/audit")
+async def get_audit_log(
+    limit: int = 100,
+    admin: Dict[str, Any] = Depends(require_admin)
+):
+    """Get recent audit log entries (admin only)."""
+    logs = await database.get_recent_audit_logs(limit)
+    return {"logs": logs}
 
 
 # Feed management endpoints
@@ -265,7 +635,11 @@ async def get_next_item_for_panel(panel: str, auth: bool = Depends(verify_auth))
 
 
 @app.post("/api/items/{item_id}/triage")
-async def triage_item(item_id: int, action: TriageAction, auth: bool = Depends(verify_auth)):
+async def triage_item(
+    item_id: int,
+    action: TriageAction,
+    user: Dict[str, Any] = Depends(get_current_user)
+):
     """Triage an item."""
     # Validate action
     if action.action not in ['alert', 'digest', 'skip']:
@@ -276,29 +650,51 @@ async def triage_item(item_id: int, action: TriageAction, auth: bool = Depends(v
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
+    # Get username for attribution
+    username = user['username']
+
     # Process based on action
     if action.action == 'alert':
         # Update status and queue webhook
-        await database.update_item_status(item_id, 'alerted', settings.USER_IDENTIFIER)
-        webhook_id = await queue_webhook(item_id, settings.USER_IDENTIFIER)
+        await database.update_item_status(item_id, 'alerted', username)
+        webhook_id = await queue_webhook(item_id, username)
+
+        # Log audit action
+        if user['id'] != 0:
+            await database.log_action(user['id'], 'triage_alert', item_id)
+
         return {
             "message": "Item marked for immediate alert",
-            "webhook_id": webhook_id
+            "webhook_id": webhook_id,
+            "triaged_by": username
         }
 
     elif action.action == 'digest':
         # Update status (will be included in next digest)
-        await database.update_item_status(item_id, 'digested', settings.USER_IDENTIFIER)
-        return {"message": "Item added to daily digest"}
+        await database.update_item_status(item_id, 'digested', username)
+
+        # Log audit action
+        if user['id'] != 0:
+            await database.log_action(user['id'], 'triage_digest', item_id)
+
+        return {"message": "Item added to daily digest", "triaged_by": username}
 
     elif action.action == 'skip':
         # Update status
-        await database.update_item_status(item_id, 'skipped', settings.USER_IDENTIFIER)
-        return {"message": "Item skipped"}
+        await database.update_item_status(item_id, 'skipped', username)
+
+        # Log audit action
+        if user['id'] != 0:
+            await database.log_action(user['id'], 'triage_skip', item_id)
+
+        return {"message": "Item skipped", "triaged_by": username}
 
 
 @app.post("/api/items/{item_id}/undo")
-async def undo_triage(item_id: int, auth: bool = Depends(verify_auth)):
+async def undo_triage(
+    item_id: int,
+    user: Dict[str, Any] = Depends(get_current_user)
+):
     """Undo a triage action by setting item back to pending."""
     # Get item to verify it exists
     item = await database.get_item_by_id(item_id)
@@ -309,19 +705,42 @@ async def undo_triage(item_id: int, auth: bool = Depends(verify_auth)):
     if item['status'] == 'pending':
         raise HTTPException(status_code=400, detail="Item is already pending")
 
+    # Store previous status for audit
+    previous_status = item['status']
+
     # Set back to pending
     await database.update_item_status(item_id, 'pending', None)
+
+    # Log audit action
+    if user['id'] != 0:
+        await database.log_action(
+            user['id'],
+            'undo',
+            item_id,
+            details={'previous_status': previous_status}
+        )
 
     return {"message": "Item restored to pending"}
 
 
 @app.post("/api/items/skip-all")
-async def skip_all_items(auth: bool = Depends(verify_auth)):
+async def skip_all_items(user: Dict[str, Any] = Depends(get_current_user)):
     """Skip all pending items."""
-    count = await database.skip_all_pending(settings.USER_IDENTIFIER)
+    username = user['username']
+    count = await database.skip_all_pending(username)
+
+    # Log audit action for bulk skip
+    if user['id'] != 0:
+        await database.log_action(
+            user['id'],
+            'skip_all',
+            details={'count': count}
+        )
+
     return {
         "message": f"Skipped {count} items",
-        "count": count
+        "count": count,
+        "skipped_by": username
     }
 
 

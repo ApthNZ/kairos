@@ -1,0 +1,8 @@
+[
+    {
+        "file": "scripts/create_admin.py",
+        "line": 67,
+        "category": "hardcoded_secret",
+        "reason": "False positive - getpass.getpass() is the secure way to get passwords from user input, not a hardcoded password"
+    }
+]

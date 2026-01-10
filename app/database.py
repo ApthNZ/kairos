@@ -1,7 +1,9 @@
 """Database models and initialization for RSS Triage System."""
 import aiosqlite
+import bcrypt
 import json
-from datetime import datetime
+import secrets
+from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from pathlib import Path
 
@@ -67,6 +69,48 @@ async def init_db():
             )
         """)
 
+        # Users table for multi-user support
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                role TEXT DEFAULT 'analyst',
+                active INTEGER DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                last_login DATETIME
+            )
+        """)
+
+        # Sessions table for server-side session management
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                token TEXT UNIQUE NOT NULL,
+                expires_at DATETIME NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                ip_address TEXT,
+                user_agent TEXT,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        """)
+
+        # Audit log for tracking all user actions
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS audit_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                item_id INTEGER,
+                action TEXT NOT NULL,
+                details TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id),
+                FOREIGN KEY (item_id) REFERENCES items(id)
+            )
+        """)
+
         # Create indexes for performance
         await db.execute("""
             CREATE INDEX IF NOT EXISTS idx_items_status
@@ -81,6 +125,32 @@ async def init_db():
         await db.execute("""
             CREATE INDEX IF NOT EXISTS idx_webhook_status
             ON webhook_queue(status, created_at)
+        """)
+
+        # Indexes for multi-user tables
+        await db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_items_triaged_by
+            ON items(triaged_by)
+        """)
+
+        await db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_sessions_token
+            ON sessions(token)
+        """)
+
+        await db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_sessions_expires
+            ON sessions(expires_at)
+        """)
+
+        await db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_audit_user
+            ON audit_log(user_id, timestamp DESC)
+        """)
+
+        await db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_audit_action
+            ON audit_log(action, timestamp DESC)
         """)
 
         await db.commit()
@@ -451,3 +521,329 @@ async def clear_digest_items():
             "UPDATE items SET status = 'archived' WHERE status = 'digested'"
         )
         await db.commit()
+
+
+# Password hashing functions
+def hash_password(password: str) -> str:
+    """Hash a password using bcrypt."""
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+
+def verify_password(password: str, hashed: str) -> bool:
+    """Verify a password against its hash."""
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+
+
+# User management functions
+async def create_user(
+    username: str,
+    email: str,
+    password: str,
+    role: str = 'analyst'
+) -> int:
+    """Create a new user. Returns user_id."""
+    password_hash = hash_password(password)
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            """INSERT INTO users (username, email, password_hash, role)
+            VALUES (?, ?, ?, ?)""",
+            (username, email, password_hash, role)
+        )
+        await db.commit()
+        return cursor.lastrowid
+
+
+async def get_user_by_id(user_id: int) -> Optional[Dict[str, Any]]:
+    """Get user by ID."""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT * FROM users WHERE id = ?", (user_id,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            return dict(row) if row else None
+
+
+async def get_user_by_username(username: str) -> Optional[Dict[str, Any]]:
+    """Get user by username."""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT * FROM users WHERE username = ?", (username,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            return dict(row) if row else None
+
+
+async def get_all_users() -> List[Dict[str, Any]]:
+    """Get all users."""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT id, username, email, role, active, created_at, last_login FROM users ORDER BY username"
+        ) as cursor:
+            rows = await cursor.fetchall()
+            return [dict(row) for row in rows]
+
+
+async def update_user(
+    user_id: int,
+    username: Optional[str] = None,
+    email: Optional[str] = None,
+    role: Optional[str] = None,
+    active: Optional[bool] = None
+) -> bool:
+    """Update user properties. Returns True if user was found."""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        updates = []
+        params = []
+
+        if username is not None:
+            updates.append("username = ?")
+            params.append(username)
+        if email is not None:
+            updates.append("email = ?")
+            params.append(email)
+        if role is not None:
+            updates.append("role = ?")
+            params.append(role)
+        if active is not None:
+            updates.append("active = ?")
+            params.append(1 if active else 0)
+
+        if not updates:
+            return False
+
+        params.append(user_id)
+        query = f"UPDATE users SET {', '.join(updates)} WHERE id = ?"
+        cursor = await db.execute(query, params)
+        await db.commit()
+        return cursor.rowcount > 0
+
+
+async def update_user_password(user_id: int, new_password: str) -> bool:
+    """Update user password. Returns True if successful."""
+    password_hash = hash_password(new_password)
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            "UPDATE users SET password_hash = ? WHERE id = ?",
+            (password_hash, user_id)
+        )
+        await db.commit()
+        return cursor.rowcount > 0
+
+
+async def update_user_last_login(user_id: int):
+    """Update user's last login timestamp."""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        await db.execute(
+            "UPDATE users SET last_login = ? WHERE id = ?",
+            (datetime.utcnow().isoformat(), user_id)
+        )
+        await db.commit()
+
+
+async def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
+    """Authenticate user by username and password. Returns user dict if valid."""
+    user = await get_user_by_username(username)
+    if not user:
+        return None
+    if not user['active']:
+        return None
+    if not verify_password(password, user['password_hash']):
+        return None
+    return user
+
+
+# Session management functions
+async def create_session(
+    user_id: int,
+    expiry_hours: int = 24,
+    ip_address: Optional[str] = None,
+    user_agent: Optional[str] = None
+) -> str:
+    """Create a new session. Returns session token."""
+    token = secrets.token_hex(32)
+    expires_at = datetime.utcnow() + timedelta(hours=expiry_hours)
+
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        await db.execute(
+            """INSERT INTO sessions (user_id, token, expires_at, ip_address, user_agent)
+            VALUES (?, ?, ?, ?, ?)""",
+            (user_id, token, expires_at.isoformat(), ip_address, user_agent)
+        )
+        await db.commit()
+    return token
+
+
+async def get_session_by_token(token: str) -> Optional[Dict[str, Any]]:
+    """Get session by token."""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT * FROM sessions WHERE token = ?", (token,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            if not row:
+                return None
+            session = dict(row)
+            # Convert expires_at string to datetime for comparison
+            session['expires_at'] = datetime.fromisoformat(session['expires_at'])
+            return session
+
+
+async def delete_session(token: str):
+    """Delete a session (logout)."""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        await db.execute("DELETE FROM sessions WHERE token = ?", (token,))
+        await db.commit()
+
+
+async def delete_user_sessions(user_id: int):
+    """Delete all sessions for a user."""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        await db.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
+        await db.commit()
+
+
+async def cleanup_expired_sessions():
+    """Remove expired sessions."""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        await db.execute(
+            "DELETE FROM sessions WHERE expires_at < ?",
+            (datetime.utcnow().isoformat(),)
+        )
+        await db.commit()
+
+
+# Audit log functions
+async def log_action(
+    user_id: int,
+    action: str,
+    item_id: Optional[int] = None,
+    details: Optional[Dict[str, Any]] = None
+):
+    """Log an audit action."""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        await db.execute(
+            """INSERT INTO audit_log (user_id, item_id, action, details)
+            VALUES (?, ?, ?, ?)""",
+            (user_id, item_id, action, json.dumps(details) if details else None)
+        )
+        await db.commit()
+
+
+async def get_recent_audit_logs(limit: int = 100) -> List[Dict[str, Any]]:
+    """Get recent audit log entries."""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            """SELECT a.*, u.username
+            FROM audit_log a
+            JOIN users u ON a.user_id = u.id
+            ORDER BY a.timestamp DESC
+            LIMIT ?""",
+            (limit,)
+        ) as cursor:
+            rows = await cursor.fetchall()
+            return [dict(row) for row in rows]
+
+
+async def get_user_audit_logs(user_id: int, limit: int = 100) -> List[Dict[str, Any]]:
+    """Get audit logs for a specific user."""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            """SELECT * FROM audit_log
+            WHERE user_id = ?
+            ORDER BY timestamp DESC
+            LIMIT ?""",
+            (user_id, limit)
+        ) as cursor:
+            rows = await cursor.fetchall()
+            return [dict(row) for row in rows]
+
+
+async def get_user_stats(user_id: int, days: int = 30) -> Dict[str, Any]:
+    """Get triage statistics for a user over the specified period."""
+    cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat()
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            """SELECT action, COUNT(*) as count
+            FROM audit_log
+            WHERE user_id = ? AND timestamp >= ?
+            AND action IN ('triage_alert', 'triage_digest', 'triage_skip')
+            GROUP BY action""",
+            (user_id, cutoff)
+        ) as cursor:
+            rows = await cursor.fetchall()
+            stats = {row['action']: row['count'] for row in rows}
+
+        return {
+            'alerted': stats.get('triage_alert', 0),
+            'digested': stats.get('triage_digest', 0),
+            'skipped': stats.get('triage_skip', 0),
+            'total': sum(stats.values())
+        }
+
+
+async def get_all_user_stats(days: int = 30) -> List[Dict[str, Any]]:
+    """Get triage statistics for all users (admin dashboard)."""
+    cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat()
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+
+        # Get all users with their stats
+        async with db.execute(
+            """SELECT u.id, u.username, u.last_login,
+                SUM(CASE WHEN a.action = 'triage_alert' THEN 1 ELSE 0 END) as alerted,
+                SUM(CASE WHEN a.action = 'triage_digest' THEN 1 ELSE 0 END) as digested,
+                SUM(CASE WHEN a.action = 'triage_skip' THEN 1 ELSE 0 END) as skipped
+            FROM users u
+            LEFT JOIN audit_log a ON u.id = a.user_id
+                AND a.timestamp >= ?
+                AND a.action IN ('triage_alert', 'triage_digest', 'triage_skip')
+            WHERE u.active = 1
+            GROUP BY u.id
+            ORDER BY (COALESCE(alerted, 0) + COALESCE(digested, 0) + COALESCE(skipped, 0)) DESC""",
+            (cutoff,)
+        ) as cursor:
+            rows = await cursor.fetchall()
+            return [{
+                'user_id': row['id'],
+                'username': row['username'],
+                'last_active': row['last_login'],
+                'stats': {
+                    'alerted': row['alerted'] or 0,
+                    'digested': row['digested'] or 0,
+                    'skipped': row['skipped'] or 0,
+                    'total': (row['alerted'] or 0) + (row['digested'] or 0) + (row['skipped'] or 0)
+                }
+            } for row in rows]
+
+
+async def get_daily_stats(days: int = 30) -> List[Dict[str, Any]]:
+    """Get daily triage statistics for all users."""
+    cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat()
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            """SELECT DATE(timestamp) as date,
+                u.username,
+                SUM(CASE WHEN action = 'triage_alert' THEN 1 ELSE 0 END) as alerted,
+                SUM(CASE WHEN action = 'triage_digest' THEN 1 ELSE 0 END) as digested,
+                SUM(CASE WHEN action = 'triage_skip' THEN 1 ELSE 0 END) as skipped
+            FROM audit_log a
+            JOIN users u ON a.user_id = u.id
+            WHERE timestamp >= ?
+            AND action IN ('triage_alert', 'triage_digest', 'triage_skip')
+            GROUP BY DATE(timestamp), u.id
+            ORDER BY date DESC, username""",
+            (cutoff,)
+        ) as cursor:
+            rows = await cursor.fetchall()
+            return [dict(row) for row in rows]

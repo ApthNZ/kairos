@@ -29,9 +29,13 @@ class Settings(BaseSettings):
     PORT: int = 8083
     HOST: str = "0.0.0.0"
 
-    # Authentication
+    # Authentication (legacy single-token auth)
     AUTH_TOKEN: Optional[str] = None
     USER_IDENTIFIER: str = "apth"
+
+    # Multi-user session settings
+    SESSION_EXPIRY_HOURS: int = 24
+    MIN_PASSWORD_LENGTH: int = 8
 
     # Logging
     LOG_LEVEL: str = "INFO"

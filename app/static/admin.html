@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kairos - Admin Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .admin-header h1 {
+            color: var(--neon-cyan);
+            font-size: 1.8rem;
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+        }
+
+        .admin-nav {
+            display: flex;
+            gap: 12px;
+        }
+
+        .admin-nav a {
+            padding: 8px 16px;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .admin-nav a:hover {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
+        .admin-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .admin-section h2 {
+            color: var(--neon-purple);
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .user-table th,
+        .user-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .user-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .user-table tr:hover {
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        .status-active {
+            color: #10b981;
+        }
+
+        .status-inactive {
+            color: #ef4444;
+        }
+
+        .role-admin {
+            background: var(--neon-purple);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .role-analyst {
+            background: var(--neon-cyan);
+            color: var(--bg-color);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .period-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .period-btn {
+            padding: 6px 12px;
+            background: var(--bg-color);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .period-btn:hover,
+        .period-btn.active {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
+        .leaderboard {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--bg-color);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .leaderboard-rank {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            min-width: 40px;
+        }
+
+        .leaderboard-rank.gold { color: #fbbf24; }
+        .leaderboard-rank.silver { color: #9ca3af; }
+        .leaderboard-rank.bronze { color: #f59e0b; }
+
+        .leaderboard-user {
+            flex: 1;
+        }
+
+        .leaderboard-username {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .leaderboard-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .leaderboard-total {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--neon-cyan);
+        }
+
+        .audit-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .audit-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .audit-item:last-child {
+            border-bottom: none;
+        }
+
+        .audit-time {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            min-width: 140px;
+        }
+
+        .audit-user {
+            font-weight: 500;
+            color: var(--neon-cyan);
+            min-width: 100px;
+        }
+
+        .audit-action {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .audit-action.triage_alert { background: rgba(255, 0, 110, 0.2); color: var(--neon-pink); }
+        .audit-action.triage_digest { background: rgba(131, 56, 236, 0.2); color: var(--neon-purple); }
+        .audit-action.triage_skip { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+        .audit-action.login { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .audit-action.logout { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+
+        .create-user-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+            padding: 16px;
+            background: var(--bg-color);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .create-user-form input,
+        .create-user-form select {
+            padding: 10px 12px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .create-user-form input:focus,
+        .create-user-form select:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+        }
+
+        .btn-create {
+            padding: 10px 20px;
+            background: var(--neon-cyan);
+            color: var(--bg-color);
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-create:hover {
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+        }
+
+        .btn-toggle {
+            padding: 4px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .btn-toggle:hover {
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .create-user-form {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .leaderboard-stats {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>Admin Dashboard</h1>
+            <div class="admin-nav">
+                <a href="/">Back to Triage</a>
+                <a href="#" onclick="logout()">Logout</a>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="admin-section">
+            <h2>Overview (Last <span id="period-label">30</span> Days)</h2>
+            <div class="period-selector">
+                <button class="period-btn" onclick="changePeriod(7)">7 Days</button>
+                <button class="period-btn active" onclick="changePeriod(30)">30 Days</button>
+                <button class="period-btn" onclick="changePeriod(90)">90 Days</button>
+            </div>
+            <div class="stats-grid" id="stats-grid">
+                <div class="loading">Loading stats...</div>
+            </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="admin-section">
+            <h2>Contribution Leaderboard</h2>
+            <div class="leaderboard" id="leaderboard">
+                <div class="loading">Loading leaderboard...</div>
+            </div>
+        </div>
+
+        <!-- User Management -->
+        <div class="admin-section">
+            <h2>User Management</h2>
+            <form class="create-user-form" id="create-user-form" onsubmit="createUser(event)">
+                <div>
+                    <label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-secondary)">Username</label>
+                    <input type="text" id="new-username" placeholder="username" required minlength="3">
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-secondary)">Email</label>
+                    <input type="email" id="new-email" placeholder="email@example.com" required>
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-secondary)">Password</label>
+                    <input type="password" id="new-password" placeholder="password" required minlength="8">
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-secondary)">Role</label>
+                    <select id="new-role">
+                        <option value="analyst">Analyst</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-create">Create User</button>
+            </form>
+            <table class="user-table" id="user-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="user-tbody">
+                    <tr><td colspan="6" class="loading">Loading users...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="admin-section">
+            <h2>Recent Activity</h2>
+            <div class="audit-list" id="audit-list">
+                <div class="loading">Loading activity...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const authToken = localStorage.getItem('kairos_token');
+        let currentPeriod = 30;
+
+        // Check auth
+        if (!authToken) {
+            window.location.href = '/login.html';
+        }
+
+        function getAuthHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            };
+        }
+
+        async function apiCall(endpoint, options = {}) {
+            const response = await fetch(endpoint, {
+                ...options,
+                headers: {
+                    ...getAuthHeaders(),
+                    ...(options.headers || {})
+                }
+            });
+
+            if (response.status === 401) {
+                localStorage.removeItem('kairos_token');
+                localStorage.removeItem('kairos_user');
+                window.location.href = '/login.html';
+                throw new Error('Unauthorized');
+            }
+
+            if (response.status === 403) {
+                alert('Admin access required');
+                window.location.href = '/';
+                throw new Error('Forbidden');
+            }
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+                throw new Error(error.detail || `HTTP ${response.status}`);
+            }
+
+            return response.json();
+        }
+
+        function logout() {
+            fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: getAuthHeaders()
+            }).finally(() => {
+                localStorage.removeItem('kairos_token');
+                localStorage.removeItem('kairos_user');
+                window.location.href = '/login.html';
+            });
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Never';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        async function loadStats() {
+            try {
+                const data = await apiCall(`/api/admin/stats?days=${currentPeriod}`);
+
+                document.getElementById('stats-grid').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-value">${data.totals.total}</div>
+                        <div class="stat-label">Total Items Triaged</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" style="color: var(--neon-pink)">${data.totals.alerted}</div>
+                        <div class="stat-label">Alerts Sent</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" style="color: var(--neon-purple)">${data.totals.digested}</div>
+                        <div class="stat-label">Added to Digest</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" style="color: #9ca3af">${data.totals.skipped}</div>
+                        <div class="stat-label">Skipped</div>
+                    </div>
+                `;
+
+                // Update leaderboard
+                const leaderboard = data.users
+                    .filter(u => u.stats.total > 0)
+                    .sort((a, b) => b.stats.total - a.stats.total);
+
+                if (leaderboard.length === 0) {
+                    document.getElementById('leaderboard').innerHTML = '<div class="loading">No activity in this period</div>';
+                } else {
+                    document.getElementById('leaderboard').innerHTML = leaderboard.map((user, idx) => {
+                        const rankClass = idx === 0 ? 'gold' : idx === 1 ? 'silver' : idx === 2 ? 'bronze' : '';
+                        return `
+                            <div class="leaderboard-item">
+                                <div class="leaderboard-rank ${rankClass}">#${idx + 1}</div>
+                                <div class="leaderboard-user">
+                                    <div class="leaderboard-username">${escapeHtml(user.username)}</div>
+                                    <div class="leaderboard-stats">
+                                        <span style="color:var(--neon-pink)">${user.stats.alerted} alerts</span>
+                                        <span style="color:var(--neon-purple)">${user.stats.digested} digest</span>
+                                        <span>${user.stats.skipped} skipped</span>
+                                    </div>
+                                </div>
+                                <div class="leaderboard-total">${user.stats.total}</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const data = await apiCall('/api/admin/users');
+                const tbody = document.getElementById('user-tbody');
+
+                tbody.innerHTML = data.users.map(user => `
+                    <tr>
+                        <td>${escapeHtml(user.username)}</td>
+                        <td>${escapeHtml(user.email)}</td>
+                        <td><span class="role-${user.role}">${user.role}</span></td>
+                        <td class="${user.active ? 'status-active' : 'status-inactive'}">
+                            ${user.active ? 'Active' : 'Inactive'}
+                        </td>
+                        <td>${formatDate(user.last_login)}</td>
+                        <td>
+                            ${user.active
+                                ? `<button class="btn-toggle" onclick="toggleUser(${user.id}, false)">Deactivate</button>`
+                                : `<button class="btn-toggle" onclick="toggleUser(${user.id}, true)">Activate</button>`
+                            }
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        async function loadAuditLog() {
+            try {
+                const data = await apiCall('/api/admin/audit?limit=50');
+                const list = document.getElementById('audit-list');
+
+                if (data.logs.length === 0) {
+                    list.innerHTML = '<div class="loading">No recent activity</div>';
+                    return;
+                }
+
+                list.innerHTML = data.logs.map(log => `
+                    <div class="audit-item">
+                        <span class="audit-time">${formatDate(log.timestamp)}</span>
+                        <span class="audit-user">${escapeHtml(log.username)}</span>
+                        <span class="audit-action ${log.action}">${log.action.replace('_', ' ')}</span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading audit log:', error);
+            }
+        }
+
+        async function createUser(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('new-username').value;
+            const email = document.getElementById('new-email').value;
+            const password = document.getElementById('new-password').value;
+            const role = document.getElementById('new-role').value;
+
+            try {
+                await apiCall('/api/admin/users', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, email, password, role })
+                });
+
+                // Clear form and reload users
+                document.getElementById('create-user-form').reset();
+                loadUsers();
+                alert('User created successfully');
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        async function toggleUser(userId, active) {
+            try {
+                await apiCall(`/api/admin/users/${userId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ active })
+                });
+                loadUsers();
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        function changePeriod(days) {
+            currentPeriod = days;
+            document.getElementById('period-label').textContent = days;
+            document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            loadStats();
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Verify admin access
+            try {
+                const user = await apiCall('/api/auth/me');
+                if (user.role !== 'admin') {
+                    alert('Admin access required');
+                    window.location.href = '/';
+                    return;
+                }
+            } catch (error) {
+                return;
+            }
+
+            // Load all data
+            loadStats();
+            loadUsers();
+            loadAuditLog();
+        });
+    </script>
+</body>
+</html>
