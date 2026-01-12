@@ -43,10 +43,11 @@ Deploy Kairos to the cloud in one click:
 - **📋 Daily Digests** - Automated markdown reports of triaged intelligence
 - **↶ Undo** - Accidentally hit the wrong key? Undo your last action
 - **⏩ Skip All** - Bulk skip all pending items with one click
-- **🎯 Priority-Based Queuing** - High-priority feeds surface first
+- **🎯 Priority-Based Queuing** - High-priority feeds surface first (Priority 1 panel + Standard panel)
 - **🔄 Auto-Deduplication** - Never see the same item twice
 - **🐳 Dockerized** - Deploy in minutes with Docker Compose
-- **🔒 Optional Authentication** - Bearer token auth for secure deployments
+- **🔒 Multi-User Authentication** - Role-based access with admin dashboard
+- **👥 Team Features** - Shared triage queue, contribution leaderboards, audit logging
 
 ## Quick Start
 

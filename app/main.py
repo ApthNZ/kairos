@@ -70,6 +70,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8)
     role: str = Field(default='analyst', pattern='^(analyst|admin)$')
+    force_password_reset: bool = Field(default=False)
 
 
 class UserUpdate(BaseModel):
@@ -303,7 +304,8 @@ async def login(request: Request, credentials: LoginRequest):
             "id": user['id'],
             "username": user['username'],
             "email": user['email'],
-            "role": user['role']
+            "role": user['role'],
+            "force_password_reset": bool(user.get('force_password_reset', 0))
         }
     }
 
@@ -345,7 +347,8 @@ async def get_current_user_info(user: Dict[str, Any] = Depends(get_current_user)
         "email": full_user['email'],
         "role": full_user['role'],
         "created_at": full_user['created_at'],
-        "last_login": full_user['last_login']
+        "last_login": full_user['last_login'],
+        "force_password_reset": bool(full_user.get('force_password_reset', 0))
     }
 
 
@@ -365,6 +368,9 @@ async def change_password(
 
     # Update password
     await database.update_user_password(user['id'], request.new_password)
+
+    # Clear force_password_reset flag if set
+    await database.clear_force_password_reset(user['id'])
 
     # Log password change
     await database.log_action(user['id'], 'password_change')
@@ -396,14 +402,19 @@ async def create_user(
             user_data.username,
             user_data.email,
             user_data.password,
-            user_data.role
+            user_data.role,
+            user_data.force_password_reset
         )
 
         # Log admin action
         await database.log_action(
             admin['id'],
             'user_created',
-            details={'created_user_id': user_id, 'username': user_data.username}
+            details={
+                'created_user_id': user_id,
+                'username': user_data.username,
+                'force_password_reset': user_data.force_password_reset
+            }
         )
 
         return {"id": user_id, "message": "User created successfully"}

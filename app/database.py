@@ -78,10 +78,19 @@ async def init_db():
                 password_hash TEXT NOT NULL,
                 role TEXT DEFAULT 'analyst',
                 active INTEGER DEFAULT 1,
+                force_password_reset INTEGER DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 last_login DATETIME
             )
         """)
+
+        # Migration: Add force_password_reset column if it doesn't exist
+        try:
+            await db.execute("ALTER TABLE users ADD COLUMN force_password_reset INTEGER DEFAULT 0")
+            await db.commit()
+        except aiosqlite.OperationalError:
+            # Column already exists
+            pass
 
         # Sessions table for server-side session management
         await db.execute("""
@@ -539,19 +548,30 @@ async def create_user(
     username: str,
     email: str,
     password: str,
-    role: str = 'analyst'
+    role: str = 'analyst',
+    force_password_reset: bool = False
 ) -> int:
     """Create a new user. Returns user_id."""
     password_hash = hash_password(password)
     async with aiosqlite.connect(DATABASE_PATH) as db:
         db.row_factory = aiosqlite.Row
         cursor = await db.execute(
-            """INSERT INTO users (username, email, password_hash, role)
-            VALUES (?, ?, ?, ?)""",
-            (username, email, password_hash, role)
+            """INSERT INTO users (username, email, password_hash, role, force_password_reset)
+            VALUES (?, ?, ?, ?, ?)""",
+            (username, email, password_hash, role, 1 if force_password_reset else 0)
         )
         await db.commit()
         return cursor.lastrowid
+
+
+async def clear_force_password_reset(user_id: int):
+    """Clear the force_password_reset flag after user changes password."""
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        await db.execute(
+            "UPDATE users SET force_password_reset = 0 WHERE id = ?",
+            (user_id,)
+        )
+        await db.commit()
 
 
 async def get_user_by_id(user_id: int) -> Optional[Dict[str, Any]]:

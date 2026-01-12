@@ -9,22 +9,30 @@
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Kairos</h1>
-            <div class="stats">
-                <span id="remaining-count" class="stat-badge">Loading...</span>
-                <button id="undo-btn" class="btn-undo hidden" onclick="undoLastAction()">
-                    ↶ Undo
-                </button>
-                <button id="skip-all-btn" class="btn-skip-all" onclick="skipAllItems()">
-                    Skip All
-                </button>
-                <button id="manage-feeds-btn" class="btn-manage-feeds" onclick="showFeedManager()">
-                    ⚙️ Manage Feeds
-                </button>
+        <header class="app-header">
+            <div class="header-left">
+                <h1><img src="/favicon.svg" alt="" class="header-logo">Kairos</h1>
+            </div>
+            <nav class="header-nav" id="header-nav">
+                <!-- Nav links will be populated by JS based on user role -->
+            </nav>
+        </header>
+
+        <!-- Action toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <span id="remaining-count" class="count-badge">Loading...</span>
                 <span id="status-message" class="status-message"></span>
             </div>
-        </header>
+            <div class="toolbar-right">
+                <button id="undo-btn" class="toolbar-btn hidden" onclick="undoLastAction()">
+                    ↶ Undo
+                </button>
+                <button id="skip-all-btn" class="toolbar-btn toolbar-btn-warning" onclick="skipAllItems()">
+                    ⏭ Skip All
+                </button>
+            </div>
+        </div>
 
         <main id="main-content">
             <!-- Priority 1 Panel -->
@@ -49,28 +57,15 @@
                 </div>
             </section>
 
-            <!-- Social Media Panel -->
-            <section class="triage-panel" id="panel-social">
-                <div class="panel-header">
-                    <h2 class="panel-title">🐘 Social Media</h2>
-                    <span class="panel-count" id="count-social">Loading...</span>
-                </div>
-                <div class="panel-content" id="content-social">
-                    <!-- Item will be loaded here -->
-                </div>
-            </section>
         </main>
 
         <footer>
             <div class="footer-content">
                 <div class="footer-links">
-                    <a href="/api/metrics" target="_blank">Metrics</a>
-                    <span class="separator">•</span>
-                    <a href="/api/digest/latest" target="_blank">Latest Digest</a>
-                    <span class="separator">•</span>
-                    <a href="#" onclick="generateDigestNow(); return false;">Generate Digest Now</a>
-                    <span class="separator">•</span>
-                    <a href="#" onclick="showHelp(); return false;">Keyboard Shortcuts</a>
+                    <a href="/api/metrics" target="_blank" class="footer-link">Metrics</a>
+                    <a href="/api/digest/latest" target="_blank" class="footer-link">Latest Digest</a>
+                    <a href="#" onclick="generateDigestNow(); return false;" class="footer-link">Generate Digest</a>
+                    <a href="#" onclick="showHelp(); return false;" class="footer-link">Help (?)</a>
                 </div>
             </div>
         </footer>
@@ -112,24 +107,6 @@
             <div class="modal-header">
                 <h3>Manage RSS Feeds</h3>
                 <button onclick="hideFeedManager()" class="btn-close">&times;</button>
-            </div>
-
-            <!-- Add Mastodon User Form -->
-            <div class="feed-form">
-                <h4>Add Mastodon User</h4>
-                <form id="add-mastodon-form" onsubmit="addMastodonUser(event)">
-                    <div class="form-group">
-                        <label for="mastodon-handle">Mastodon Handle *</label>
-                        <input type="text" id="mastodon-handle" placeholder="@username@instance.social" required>
-                        <small>Example: @GossiTheDog@cyberplace.social</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="mastodon-priority">Priority (1-5)</label>
-                        <input type="number" id="mastodon-priority" min="1" max="5" value="3">
-                        <small>1 = most important, 5 = least important</small>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Add Mastodon User</button>
-                </form>
             </div>
 
             <!-- Add RSS Feed Form -->

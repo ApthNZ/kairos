@@ -18,14 +18,16 @@ Password: admin123
 ## Testing Checklist
 
 ### 1. Login Flow
-- [ ] Go to http://192.168.1.200:8083/login.html
-- [ ] Enter credentials above
-- [ ] Should redirect to main triage interface
+- [x] Go to http://192.168.1.200:8083/login.html
+- [x] Enter credentials above
+- [x] Should redirect to main triage interface
 
 ### 2. Main Interface
-- [ ] Username displays in header with "Admin" badge
-- [ ] Logout button visible
-- [ ] "Admin" link visible (admin users only)
+- [x] Username displays in header with gold "Admin" badge
+- [x] Logout button visible and working
+- [x] "Dashboard" button visible (admin users only) - purple button, distinct from badge
+- [x] Favicon appears next to "Kairos" title in header
+- [x] Buttons show keyboard shortcuts: Alert (A), Digest (D), Skip (S)
 
 ### 3. Triage Actions
 - [ ] Triage an item (Alert/Digest/Skip)
@@ -33,7 +35,7 @@ Password: admin123
 - [ ] Undo should work as before
 
 ### 4. Admin Dashboard
-- [ ] Click "Admin" button in header
+- [x] Click "Dashboard" button in header
 - [ ] View contribution stats (will be empty initially)
 - [ ] See user list with admin account
 - [ ] View audit log showing login event
@@ -44,8 +46,10 @@ Password: admin123
   - Email: `analyst1@localhost`
   - Password: `analyst123`
   - Role: `analyst`
+  - Force password reset: (optional checkbox)
 - [ ] Log out and log in as new user
 - [ ] Verify analyst cannot access admin dashboard (403 error)
+- [ ] If force_password_reset was checked, user should be prompted to change password
 - [ ] Triage some items as analyst
 - [ ] Log back in as admin, check leaderboard shows both users
 
@@ -88,6 +92,23 @@ curl -X POST http://localhost:8083/api/admin/users \
 - Session tokens expire after 24 hours
 - All actions logged to audit trail
 - Passwords hashed with bcrypt
+
+## Recent Changes (2025-01-12)
+
+### UI Updates
+- **Favicon in header** - Two-headed bird icon now appears next to "Kairos" title
+- **Keyboard shortcuts visible** - Buttons now show shortcuts: Alert (A), Digest (D), Skip (S)
+- **Admin badge vs button** - Badge is now gold (status indicator), Dashboard button is purple (action)
+- **Social media removed** - Only RSS feeds supported now (Priority 1 + Standard panels)
+
+### User Management
+- **Force password reset** - Checkbox when creating users to require password change on first login
+- **Better error messages** - Fixed "[object Object]" error when creating users
+
+### Backend
+- Added `force_password_reset` column to users table
+- Login response includes `force_password_reset` flag
+- Password change clears the force reset flag
 
 ## If Something Goes Wrong
 

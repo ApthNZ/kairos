@@ -7,8 +7,7 @@ let isProcessing = false;
 let lastAction = null; // Track last action for undo: {itemId, action}
 let panelData = {
     priority1: { item: null, remaining: 0 },
-    standard: { item: null, remaining: 0 },
-    social: { item: null, remaining: 0 }
+    standard: { item: null, remaining: 0 }
 };
 
 // Check for auth token in localStorage
@@ -122,17 +121,17 @@ function renderItem(panel, item) {
             <div class="item-actions">
                 <button class="btn btn-alert" onclick="triageItem('${panel}', ${item.id}, 'alert')">
                     <span class="btn-icon">🚨</span>
-                    <span class="btn-text">Alert</span>
+                    <span class="btn-text">Alert (A)</span>
                 </button>
 
                 <button class="btn btn-digest" onclick="triageItem('${panel}', ${item.id}, 'digest')">
                     <span class="btn-icon">📋</span>
-                    <span class="btn-text">Digest</span>
+                    <span class="btn-text">Digest (D)</span>
                 </button>
 
                 <button class="btn btn-skip" onclick="triageItem('${panel}', ${item.id}, 'skip')">
                     <span class="btn-icon">⏭️</span>
-                    <span class="btn-text">Skip</span>
+                    <span class="btn-text">Skip (S)</span>
                 </button>
             </div>
         </article>
@@ -166,8 +165,7 @@ async function loadPanelItem(panel) {
 async function loadAllPanels() {
     await Promise.all([
         loadPanelItem('priority1'),
-        loadPanelItem('standard'),
-        loadPanelItem('social')
+        loadPanelItem('standard')
     ]);
 }
 
@@ -356,23 +354,10 @@ async function loadFeeds() {
             return;
         }
 
-        // Group by category
-        const rssFeeds = data.feeds.filter(f => f.category === 'RSS').sort((a, b) => a.priority - b.priority);
-        const socialFeeds = data.feeds.filter(f => f.category === 'Social').sort((a, b) => a.priority - b.priority);
+        // Sort feeds by priority
+        const feeds = data.feeds.sort((a, b) => a.priority - b.priority);
 
-        let html = '';
-
-        if (rssFeeds.length > 0) {
-            html += '<div class="feed-category-header">RSS Feeds</div>';
-            html += rssFeeds.map(feed => renderFeedRow(feed)).join('');
-        }
-
-        if (socialFeeds.length > 0) {
-            html += '<div class="feed-category-header">Social Media</div>';
-            html += socialFeeds.map(feed => renderFeedRow(feed)).join('');
-        }
-
-        feedList.innerHTML = html;
+        feedList.innerHTML = feeds.map(feed => renderFeedRow(feed)).join('');
 
     } catch (error) {
         console.error('Error loading feeds:', error);
@@ -389,7 +374,6 @@ function renderFeedRow(feed) {
                 <div class="feed-info-url">${escapeHtml(feed.url)}</div>
                 <div class="feed-info-meta">
                     <span class="feed-priority">Priority: ${feed.priority}</span>
-                    <span class="feed-category">${feed.category}</span>
                     <span class="feed-status ${feed.active ? 'active' : 'inactive'}">
                         ${feed.active ? '✓ Active' : '✗ Inactive'}
                     </span>
@@ -410,7 +394,7 @@ function renderFeedRow(feed) {
 function renderFeedEditRow(feed) {
     return `
         <div class="feed-item-row feed-edit-row" id="feed-row-${feed.id}">
-            <div class="feed-edit-form">
+            <div class="feed-edit-form" style="grid-template-columns: 1fr 150px auto;">
                 <div class="form-group">
                     <label>Name</label>
                     <input type="text" id="edit-name-${feed.id}" value="${escapeHtml(feed.name || '')}" placeholder="Feed name">
@@ -418,13 +402,6 @@ function renderFeedEditRow(feed) {
                 <div class="form-group">
                     <label>Priority (1-5)</label>
                     <input type="number" id="edit-priority-${feed.id}" min="1" max="5" value="${feed.priority}">
-                </div>
-                <div class="form-group">
-                    <label>Category</label>
-                    <select id="edit-category-${feed.id}">
-                        <option value="RSS" ${feed.category === 'RSS' ? 'selected' : ''}>RSS</option>
-                        <option value="Social" ${feed.category === 'Social' ? 'selected' : ''}>Social</option>
-                    </select>
                 </div>
                 <div class="feed-edit-actions">
                     <button class="btn-save" onclick="saveFeed(${feed.id})">Save</button>
@@ -475,58 +452,6 @@ async function addFeed(event) {
     }
 }
 
-async function addMastodonUser(event) {
-    event.preventDefault();
-
-    const handleInput = document.getElementById('mastodon-handle');
-    const priorityInput = document.getElementById('mastodon-priority');
-    const submitBtn = event.target.querySelector('button[type="submit"]');
-
-    const handle = handleInput.value.trim();
-
-    // Parse Mastodon handle: @username@instance.social
-    const match = handle.match(/@?([^@]+)@([^@]+)/);
-    if (!match) {
-        alert('Invalid Mastodon handle format. Use: @username@instance.social');
-        return;
-    }
-
-    const username = match[1];
-    const instance = match[2];
-    const rssUrl = `https://${instance}/@${username}.rss`;
-    const displayName = `@${username}@${instance}`;
-
-    const feedData = {
-        url: rssUrl,
-        name: displayName,
-        priority: parseInt(priorityInput.value),
-        category: 'Social'
-    };
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Adding...';
-
-    try {
-        await apiCall('/api/feeds', {
-            method: 'POST',
-            body: JSON.stringify(feedData)
-        });
-
-        handleInput.value = '';
-        priorityInput.value = '3';
-
-        await loadFeeds();
-        showFeedSuccess(`Mastodon user ${displayName} added successfully!`);
-
-    } catch (error) {
-        console.error('Error adding Mastodon user:', error);
-        alert(`Error adding Mastodon user: ${error.message}`);
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Add Mastodon User';
-    }
-}
-
 function showFeedSuccess(message) {
     const feedListContainer = document.querySelector('.feed-list-container');
     const successMsg = document.createElement('div');
@@ -567,13 +492,12 @@ async function editFeed(feedId) {
 async function saveFeed(feedId) {
     const nameInput = document.getElementById(`edit-name-${feedId}`);
     const priorityInput = document.getElementById(`edit-priority-${feedId}`);
-    const categorySelect = document.getElementById(`edit-category-${feedId}`);
 
     const feedData = {
         url: feedBeingEdited.url, // URL can't be changed
         name: nameInput.value.trim() || null,
         priority: parseInt(priorityInput.value),
-        category: categorySelect.value
+        category: 'RSS'
     };
 
     try {
@@ -629,6 +553,76 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Force password reset modal
+function showForcePasswordReset() {
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.id = 'password-reset-modal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px;">
+            <h2 style="margin-bottom: 16px; color: var(--neon-cyan);">Password Reset Required</h2>
+            <p style="margin-bottom: 20px; color: var(--text-secondary);">Your account requires a password change before you can continue.</p>
+            <form id="force-reset-form">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="display: block; margin-bottom: 4px;">Current Password</label>
+                    <input type="password" id="reset-current-password" required style="width: 100%;">
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="display: block; margin-bottom: 4px;">New Password</label>
+                    <input type="password" id="reset-new-password" required minlength="8" style="width: 100%;">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px;">Confirm New Password</label>
+                    <input type="password" id="reset-confirm-password" required minlength="8" style="width: 100%;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Change Password</button>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Handle form submission
+    document.getElementById('force-reset-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const currentPwd = document.getElementById('reset-current-password').value;
+        const newPwd = document.getElementById('reset-new-password').value;
+        const confirmPwd = document.getElementById('reset-confirm-password').value;
+
+        if (newPwd !== confirmPwd) {
+            alert('New passwords do not match');
+            return;
+        }
+
+        if (newPwd.length < 8) {
+            alert('Password must be at least 8 characters');
+            return;
+        }
+
+        try {
+            await apiCall('/api/auth/change-password', {
+                method: 'POST',
+                body: JSON.stringify({
+                    current_password: currentPwd,
+                    new_password: newPwd
+                })
+            });
+
+            // Update local user state
+            currentUser.force_password_reset = false;
+            localStorage.setItem('kairos_user', JSON.stringify(currentUser));
+
+            // Remove modal
+            modal.remove();
+            alert('Password changed successfully!');
+
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+        }
+    });
+}
+
 // Help modal
 function showHelp() {
     helpModal.classList.remove('hidden');
@@ -666,7 +660,7 @@ document.addEventListener('keydown', (e) => {
     let targetPanel = null;
     let targetItem = null;
 
-    for (const panel of ['priority1', 'standard', 'social']) {
+    for (const panel of ['priority1', 'standard']) {
         const item = panelData[panel].item;
         if (item) {
             targetPanel = panel;
@@ -689,33 +683,33 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Initialize user display in header
+// Initialize header navigation
 function initUserDisplay() {
-    const header = document.querySelector('header');
-    const statsDiv = header.querySelector('.stats');
+    const headerNav = document.getElementById('header-nav');
+    if (!headerNav) return;
 
-    // Create user info element
-    const userInfo = document.createElement('div');
-    userInfo.className = 'user-info';
+    let navHtml = '';
 
-    if (currentUser) {
-        userInfo.innerHTML = `
-            <span class="user-name">${escapeHtml(currentUser.username)}</span>
-            ${currentUser.role === 'admin' ? '<span class="admin-badge">Admin</span>' : ''}
-            <button class="btn-logout" onclick="logout()" title="Sign out">Logout</button>
-        `;
-        // Add admin link if admin
-        if (currentUser.role === 'admin') {
-            const adminLink = document.createElement('a');
-            adminLink.href = '/admin.html';
-            adminLink.className = 'btn-admin';
-            adminLink.textContent = 'Admin';
-            userInfo.insertBefore(adminLink, userInfo.querySelector('.btn-logout'));
-        }
+    // Navigation links
+    navHtml += '<a href="#" class="nav-link" onclick="showFeedManager(); return false;">Feeds</a>';
+
+    // Admin dashboard link (if admin)
+    if (currentUser && currentUser.role === 'admin') {
+        navHtml += '<a href="/admin.html" class="nav-link">Dashboard</a>';
     }
 
-    // Insert user info before stats
-    statsDiv.insertBefore(userInfo, statsDiv.firstChild);
+    // User section
+    if (currentUser) {
+        navHtml += '<div class="nav-user">';
+        navHtml += `<span class="nav-username">${escapeHtml(currentUser.username)}</span>`;
+        if (currentUser.role === 'admin') {
+            navHtml += '<span class="role-badge">Admin</span>';
+        }
+        navHtml += '<a href="#" class="nav-link" onclick="logout(); return false;">Logout</a>';
+        navHtml += '</div>';
+    }
+
+    headerNav.innerHTML = navHtml;
 }
 
 // Check authentication and redirect if needed
@@ -754,6 +748,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // Check if user needs to reset password
+    if (currentUser.force_password_reset) {
+        showForcePasswordReset();
+    }
+
     // Set up user display
     initUserDisplay();
 
@@ -765,7 +764,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!isProcessing) {
             try {
                 // Update counts without full reload
-                for (const panel of ['priority1', 'standard', 'social']) {
+                for (const panel of ['priority1', 'standard']) {
                     const data = await apiCall(`/api/items/next/${panel}`);
                     const countEl = document.getElementById(`count-${panel}`);
                     if (countEl) {

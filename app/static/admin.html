@@ -17,35 +17,89 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
+            background: var(--card-bg);
+            padding: 16px 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+        }
+
+        .admin-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
 
         .admin-header h1 {
             color: var(--neon-cyan);
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             text-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+        }
+
+        .admin-header h1 img {
+            width: 28px;
+            height: 28px;
+            filter: drop-shadow(0 0 8px rgba(131, 56, 236, 0.6));
         }
 
         .admin-nav {
             display: flex;
-            gap: 12px;
+            gap: 8px;
+            align-items: center;
         }
 
         .admin-nav a {
-            padding: 8px 16px;
-            background: var(--card-bg);
-            color: var(--text-primary);
+            padding: 8px 14px;
+            background: transparent;
+            color: var(--text-secondary);
             text-decoration: none;
             border-radius: 6px;
             border: 1px solid var(--border-color);
             transition: all 0.2s;
+            font-size: 14px;
         }
 
         .admin-nav a:hover {
             border-color: var(--neon-cyan);
             color: var(--neon-cyan);
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        .admin-nav a.active {
+            border-color: var(--neon-purple);
+            color: var(--neon-purple);
+        }
+
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-left: 8px;
+            border-left: 1px solid var(--border-color);
+            margin-left: 8px;
+        }
+
+        .nav-username {
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1a1f3a;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .admin-section {
@@ -340,10 +394,15 @@
 <body>
     <div class="admin-container">
         <div class="admin-header">
-            <h1>Admin Dashboard</h1>
+            <div class="admin-header-left">
+                <h1><img src="/favicon.svg" alt="">Kairos</h1>
+            </div>
             <div class="admin-nav">
-                <a href="/">Back to Triage</a>
-                <a href="#" onclick="logout()">Logout</a>
+                <a href="/">Triage</a>
+                <a href="/admin.html" class="active">Dashboard</a>
+                <div class="nav-user" id="admin-nav-user">
+                    <!-- Populated by JS -->
+                </div>
             </div>
         </div>
 
@@ -371,7 +430,7 @@
         <!-- User Management -->
         <div class="admin-section">
             <h2>User Management</h2>
-            <form class="create-user-form" id="create-user-form" onsubmit="createUser(event)">
+            <form class="create-user-form" id="create-user-form" onsubmit="createUser(event)" style="grid-template-columns: 1fr 1fr 1fr 1fr auto auto;">
                 <div>
                     <label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-secondary)">Username</label>
                     <input type="text" id="new-username" placeholder="username" required minlength="3">
@@ -390,6 +449,12 @@
                         <option value="analyst">Analyst</option>
                         <option value="admin">Admin</option>
                     </select>
+                </div>
+                <div style="display:flex;align-items:center;padding-top:18px;">
+                    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);cursor:pointer;">
+                        <input type="checkbox" id="new-force-reset" style="width:auto;">
+                        Force password reset
+                    </label>
                 </div>
                 <button type="submit" class="btn-create">Create User</button>
             </form>
@@ -597,11 +662,12 @@
             const email = document.getElementById('new-email').value;
             const password = document.getElementById('new-password').value;
             const role = document.getElementById('new-role').value;
+            const forceReset = document.getElementById('new-force-reset').checked;
 
             try {
                 await apiCall('/api/admin/users', {
                     method: 'POST',
-                    body: JSON.stringify({ username, email, password, role })
+                    body: JSON.stringify({ username, email, password, role, force_password_reset: forceReset })
                 });
 
                 // Clear form and reload users
@@ -609,7 +675,8 @@
                 loadUsers();
                 alert('User created successfully');
             } catch (error) {
-                alert(`Error: ${error.message}`);
+                const errorMsg = typeof error === 'object' ? (error.message || JSON.stringify(error)) : String(error);
+                alert(`Error creating user: ${errorMsg}`);
             }
         }
 
@@ -643,15 +710,26 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
             // Verify admin access
+            let currentUser;
             try {
-                const user = await apiCall('/api/auth/me');
-                if (user.role !== 'admin') {
+                currentUser = await apiCall('/api/auth/me');
+                if (currentUser.role !== 'admin') {
                     alert('Admin access required');
                     window.location.href = '/';
                     return;
                 }
             } catch (error) {
                 return;
+            }
+
+            // Populate nav user section
+            const navUser = document.getElementById('admin-nav-user');
+            if (navUser && currentUser) {
+                navUser.innerHTML = `
+                    <span class="nav-username">${currentUser.username}</span>
+                    <span class="role-badge">Admin</span>
+                    <a href="#" onclick="logout(); return false;">Logout</a>
+                `;
             }
 
             // Load all data
