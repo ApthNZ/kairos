@@ -1,21 +1,36 @@
-/* RSS Triage System Styles - SYNTHWAVE EDITION */
+/* Kairos RSS Triage System - MONOKAI EDITION */
 
 :root {
-    --primary-color: #00f0ff;
-    --alert-color: #ff006e;
-    --digest-color: #8338ec;
-    --skip-color: #6b7280;
-    --bg-color: #0a0e27;
-    --card-bg: #1a1f3a;
-    --text-primary: #e0e7ff;
-    --text-secondary: #a5b4fc;
-    --border-color: #3730a3;
-    --shadow: 0 0 20px rgba(0, 240, 255, 0.2);
-    --shadow-lg: 0 0 40px rgba(0, 240, 255, 0.3);
-    --neon-pink: #ff006e;
-    --neon-cyan: #00f0ff;
-    --neon-purple: #8338ec;
-    --grid-color: rgba(131, 56, 236, 0.1);
+    /* Monokai Background */
+    --bg-primary: #272822;
+    --bg-secondary: #1e1f1a;
+    --bg-card: #3e3d32;
+
+    /* Monokai Text */
+    --text-primary: #f8f8f2;
+    --text-secondary: #a6a68a;
+
+    /* Monokai Accent Colors */
+    --monokai-green: #a6e22e;
+    --monokai-pink: #f92672;
+    --monokai-blue: #66d9ef;
+    --monokai-orange: #fd971f;
+    --monokai-purple: #ae81ff;
+    --monokai-yellow: #e6db74;
+
+    /* Semantic mappings */
+    --primary-color: var(--monokai-green);
+    --alert-color: var(--monokai-pink);
+    --digest-color: var(--monokai-purple);
+    --skip-color: #75715e;
+    --border-color: #49483e;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+    /* Legacy compatibility */
+    --neon-pink: var(--monokai-pink);
+    --neon-cyan: var(--monokai-blue);
+    --neon-purple: var(--monokai-purple);
 }
 
 * {
@@ -26,14 +41,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    background-color: var(--bg-color);
-    background-image:
-        linear-gradient(rgba(131, 56, 236, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(131, 56, 236, 0.05) 1px, transparent 1px),
-        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
-    background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
-    background-position: -1px -1px, -1px -1px, -1px -1px, -1px -1px;
+    background-color: var(--bg-primary);
     color: var(--text-primary);
     line-height: 1.6;
 }
@@ -52,7 +60,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--card-bg);
+    background: var(--bg-card);
     padding: 16px 24px;
     border-radius: 12px;
     box-shadow: var(--shadow);
@@ -63,9 +71,7 @@ body {
 .app-header h1 {
     font-size: 24px;
     font-weight: 700;
-    color: var(--neon-cyan);
-    text-shadow: 0 0 20px rgba(0, 240, 255, 0.6),
-                 0 0 40px rgba(0, 240, 255, 0.4);
+    color: var(--monokai-green);
     letter-spacing: 0.05em;
     display: flex;
     align-items: center;
@@ -76,7 +82,7 @@ body {
 .header-logo {
     width: 28px;
     height: 28px;
-    filter: drop-shadow(0 0 8px rgba(131, 56, 236, 0.6));
+    filter: drop-shadow(0 0 8px rgba(166, 226, 46, 0.4));
 }
 
 .header-left {
@@ -104,14 +110,14 @@ body {
 }
 
 .nav-link:hover {
-    border-color: var(--neon-cyan);
-    color: var(--neon-cyan);
-    background: rgba(0, 240, 255, 0.05);
+    border-color: var(--monokai-green);
+    color: var(--monokai-green);
+    background: rgba(166, 226, 46, 0.1);
 }
 
 .nav-link.active {
-    border-color: var(--neon-purple);
-    color: var(--neon-purple);
+    border-color: var(--monokai-purple);
+    color: var(--monokai-purple);
 }
 
 /* User info in nav */
@@ -134,8 +140,8 @@ body {
 .role-badge {
     display: inline-block;
     padding: 2px 6px;
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    color: #1a1f3a;
+    background: var(--monokai-orange);
+    color: var(--bg-primary);
     border-radius: 4px;
     font-size: 10px;
     font-weight: 700;
@@ -148,7 +154,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--card-bg);
+    background: var(--bg-card);
     padding: 12px 16px;
     border-radius: 8px;
     margin-bottom: 20px;
@@ -165,9 +171,9 @@ body {
 .count-badge {
     display: inline-block;
     padding: 4px 10px;
-    background: rgba(0, 240, 255, 0.15);
-    color: var(--neon-cyan);
-    border: 1px solid rgba(0, 240, 255, 0.3);
+    background: rgba(166, 226, 46, 0.15);
+    color: var(--monokai-green);
+    border: 1px solid rgba(166, 226, 46, 0.3);
     border-radius: 4px;
     font-size: 13px;
     font-weight: 500;
@@ -181,7 +187,7 @@ body {
 /* Toolbar buttons - secondary actions */
 .toolbar-btn {
     padding: 6px 12px;
-    background: var(--bg-color);
+    background: var(--bg-secondary);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -192,8 +198,8 @@ body {
 }
 
 .toolbar-btn:hover {
-    border-color: var(--neon-cyan);
-    color: var(--neon-cyan);
+    border-color: var(--monokai-green);
+    color: var(--monokai-green);
 }
 
 .toolbar-btn:disabled {
@@ -202,21 +208,21 @@ body {
 }
 
 .toolbar-btn-warning {
-    border-color: rgba(239, 68, 68, 0.5);
-    color: #ef4444;
+    border-color: rgba(249, 38, 114, 0.5);
+    color: var(--monokai-pink);
 }
 
 .toolbar-btn-warning:hover {
-    border-color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--monokai-pink);
+    background: rgba(249, 38, 114, 0.1);
 }
 
 /* Legacy button styles - keep for compatibility */
 .btn-undo {
     display: inline-block;
     padding: 6px 12px;
-    background: #f59e0b;
-    color: white;
+    background: var(--monokai-orange);
+    color: var(--bg-primary);
     border: none;
     border-radius: 6px;
     font-size: 14px;
@@ -227,7 +233,7 @@ body {
 }
 
 .btn-undo:hover {
-    background: #d97706;
+    background: #e5a02d;
     transform: translateY(-1px);
 }
 
@@ -239,7 +245,7 @@ body {
 .btn-skip-all {
     display: inline-block;
     padding: 6px 12px;
-    background: #dc2626;
+    background: var(--monokai-pink);
     color: white;
     border: none;
     border-radius: 6px;
@@ -251,7 +257,7 @@ body {
 }
 
 .btn-skip-all:hover {
-    background: #b91c1c;
+    background: #ff3d8a;
     transform: translateY(-1px);
 }
 
@@ -263,7 +269,7 @@ body {
 .btn-manage-feeds {
     display: inline-block;
     padding: 6px 12px;
-    background: var(--neon-purple);
+    background: var(--monokai-purple);
     color: white;
     border: none;
     border-radius: 6px;
@@ -272,13 +278,11 @@ body {
     cursor: pointer;
     transition: all 0.2s;
     margin-left: 8px;
-    box-shadow: 0 0 15px rgba(131, 56, 236, 0.4);
 }
 
 .btn-manage-feeds:hover {
-    background: #9d4edd;
+    background: #c49bff;
     transform: translateY(-1px);
-    box-shadow: 0 0 25px rgba(131, 56, 236, 0.6);
 }
 
 .btn-manage-feeds:disabled {
@@ -300,9 +304,9 @@ main {
 
 /* Triage Panels */
 .triage-panel {
-    background: var(--card-bg);
+    background: var(--bg-card);
     border-radius: 12px;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow);
     border: 1px solid var(--border-color);
     overflow: hidden;
 }
@@ -312,7 +316,7 @@ main {
     justify-content: space-between;
     align-items: center;
     padding: 16px 20px;
-    background: var(--bg-color);
+    background: var(--bg-secondary);
     border-bottom: 2px solid var(--border-color);
 }
 
@@ -354,14 +358,14 @@ main {
 }
 
 .error-panel {
-    color: var(--neon-pink);
+    color: var(--monokai-pink);
 }
 
 .spinner {
     width: 48px;
     height: 48px;
     border: 4px solid var(--border-color);
-    border-top-color: var(--primary-color);
+    border-top-color: var(--monokai-green);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 16px;
@@ -385,7 +389,6 @@ main {
     margin-bottom: 20px;
     padding-bottom: 20px;
     border-bottom: 2px solid var(--border-color);
-    box-shadow: 0 2px 0 0 rgba(131, 56, 236, 0.3);
 }
 
 .item-header h2,
@@ -395,7 +398,6 @@ main {
     margin-bottom: 12px;
     line-height: 1.3;
     color: var(--text-primary);
-    text-shadow: 0 0 10px rgba(224, 231, 255, 0.3);
 }
 
 .item-title {
@@ -412,7 +414,7 @@ main {
 
 .source {
     font-weight: 600;
-    color: var(--primary-color);
+    color: var(--monokai-blue);
 }
 
 .separator {
@@ -431,7 +433,7 @@ main {
 }
 
 .read-more {
-    color: var(--primary-color);
+    color: var(--monokai-blue);
     text-decoration: none;
     font-weight: 600;
     font-size: 14px;
@@ -468,7 +470,7 @@ main {
 
 .btn:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow);
 }
 
 .btn:active {
@@ -497,27 +499,23 @@ main {
 }
 
 .btn-alert {
-    background: var(--alert-color);
+    background: var(--monokai-pink);
     color: white;
-    box-shadow: 0 0 20px rgba(255, 0, 110, 0.4);
 }
 
 .btn-alert:hover {
-    background: #ff1a7e;
-    box-shadow: 0 0 30px rgba(255, 0, 110, 0.6),
-                0 0 60px rgba(255, 0, 110, 0.3);
+    background: #ff3d8a;
+    box-shadow: 0 0 20px rgba(249, 38, 114, 0.4);
 }
 
 .btn-digest {
-    background: var(--digest-color);
+    background: var(--monokai-purple);
     color: white;
-    box-shadow: 0 0 20px rgba(131, 56, 236, 0.4);
 }
 
 .btn-digest:hover {
-    background: #9d4edd;
-    box-shadow: 0 0 30px rgba(131, 56, 236, 0.6),
-                0 0 60px rgba(131, 56, 236, 0.3);
+    background: #c49bff;
+    box-shadow: 0 0 20px rgba(174, 129, 255, 0.4);
 }
 
 .btn-skip {
@@ -526,17 +524,17 @@ main {
 }
 
 .btn-skip:hover {
-    background: #4b5563;
+    background: #8a8570;
 }
 
 .btn-primary {
-    background: var(--primary-color);
-    color: white;
+    background: var(--monokai-green);
+    color: var(--bg-primary);
     padding: 12px 24px;
 }
 
 .btn-primary:hover {
-    background: #1d4ed8;
+    background: #b8f332;
 }
 
 /* Footer */
@@ -570,14 +568,14 @@ footer {
 }
 
 .footer-link:hover {
-    color: var(--neon-cyan);
+    color: var(--monokai-green);
     border-color: var(--border-color);
-    background: rgba(0, 240, 255, 0.05);
+    background: rgba(166, 226, 46, 0.1);
 }
 
 /* Legacy footer link style */
 .footer-links a:not(.footer-link) {
-    color: var(--primary-color);
+    color: var(--monokai-blue);
     text-decoration: none;
 }
 
@@ -592,7 +590,7 @@ footer {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(10, 14, 39, 0.85);
+    background: rgba(30, 31, 26, 0.9);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
@@ -602,7 +600,7 @@ footer {
 }
 
 .modal-content {
-    background: var(--card-bg);
+    background: var(--bg-card);
     padding: 32px;
     border-radius: 12px;
     max-width: 500px;
@@ -614,6 +612,7 @@ footer {
 .modal-content h3 {
     margin-bottom: 20px;
     font-size: 22px;
+    color: var(--monokai-yellow);
 }
 
 .modal-wide {
@@ -648,7 +647,7 @@ footer {
 }
 
 .btn-close:hover {
-    color: var(--neon-pink);
+    color: var(--monokai-pink);
     transform: scale(1.1);
 }
 
@@ -671,21 +670,20 @@ footer {
 kbd {
     display: inline-block;
     padding: 4px 8px;
-    background: var(--bg-color);
-    border: 1px solid var(--neon-cyan);
+    background: var(--bg-secondary);
+    border: 1px solid var(--monokai-yellow);
     border-radius: 4px;
     font-family: monospace;
     font-size: 14px;
     font-weight: 600;
     min-width: 32px;
     text-align: center;
-    color: var(--neon-cyan);
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+    color: var(--monokai-yellow);
 }
 
 /* Feed Management */
 .feed-form {
-    background: var(--bg-color);
+    background: var(--bg-secondary);
     padding: 20px;
     border-radius: 8px;
     margin-bottom: 24px;
@@ -694,7 +692,7 @@ kbd {
 
 .feed-form h4 {
     margin-bottom: 16px;
-    color: var(--neon-cyan);
+    color: var(--monokai-blue);
     font-size: 16px;
 }
 
@@ -713,7 +711,7 @@ kbd {
 .form-group input {
     width: 100%;
     padding: 10px 12px;
-    background: var(--card-bg);
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 6px;
     color: var(--text-primary);
@@ -723,8 +721,8 @@ kbd {
 
 .form-group input:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+    border-color: var(--monokai-green);
+    box-shadow: 0 0 10px rgba(166, 226, 46, 0.2);
 }
 
 .form-group small {
@@ -740,7 +738,7 @@ kbd {
 
 .feed-list-container h4 {
     margin-bottom: 16px;
-    color: var(--neon-purple);
+    color: var(--monokai-purple);
     font-size: 16px;
 }
 
@@ -757,7 +755,7 @@ kbd {
     width: 20px;
     height: 20px;
     border: 2px solid var(--border-color);
-    border-top-color: var(--primary-color);
+    border-top-color: var(--monokai-green);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -772,7 +770,7 @@ kbd {
     justify-content: space-between;
     align-items: center;
     padding: 12px;
-    background: var(--bg-color);
+    background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 6px;
     margin-bottom: 8px;
@@ -780,8 +778,7 @@ kbd {
 }
 
 .feed-item-row:hover {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    border-color: var(--monokai-green);
 }
 
 .feed-info {
@@ -812,7 +809,7 @@ kbd {
 }
 
 .feed-priority {
-    color: var(--neon-cyan);
+    color: var(--monokai-blue);
     font-weight: 600;
 }
 
@@ -821,11 +818,11 @@ kbd {
 }
 
 .feed-status.active {
-    color: #10b981;
+    color: var(--monokai-green);
 }
 
 .feed-status.inactive {
-    color: #ef4444;
+    color: var(--monokai-pink);
 }
 
 .feed-actions {
@@ -836,7 +833,7 @@ kbd {
 
 .btn-edit {
     padding: 6px 12px;
-    background: var(--neon-purple);
+    background: var(--monokai-purple);
     color: white;
     border: none;
     border-radius: 4px;
@@ -847,8 +844,7 @@ kbd {
 }
 
 .btn-edit:hover {
-    background: #9d4edd;
-    box-shadow: 0 0 15px rgba(131, 56, 236, 0.5);
+    background: #c49bff;
 }
 
 .btn-edit:disabled {
@@ -858,7 +854,7 @@ kbd {
 
 .btn-delete {
     padding: 6px 12px;
-    background: var(--neon-pink);
+    background: var(--monokai-pink);
     color: white;
     border: none;
     border-radius: 4px;
@@ -869,8 +865,7 @@ kbd {
 }
 
 .btn-delete:hover {
-    background: #ff1a7e;
-    box-shadow: 0 0 15px rgba(255, 0, 110, 0.5);
+    background: #ff3d8a;
 }
 
 .btn-delete:disabled {
@@ -879,7 +874,7 @@ kbd {
 }
 
 .feed-edit-row {
-    background: var(--bg-color);
+    background: var(--bg-secondary);
 }
 
 .feed-edit-form {
@@ -912,8 +907,8 @@ kbd {
 
 .btn-save {
     padding: 8px 14px;
-    background: #10b981;
-    color: white;
+    background: var(--monokai-green);
+    color: var(--bg-primary);
     border: none;
     border-radius: 4px;
     font-size: 12px;
@@ -923,7 +918,7 @@ kbd {
 }
 
 .btn-save:hover {
-    background: #059669;
+    background: #b8f332;
 }
 
 .btn-cancel {
@@ -939,7 +934,7 @@ kbd {
 }
 
 .btn-cancel:hover {
-    background: #4b5563;
+    background: #8a8570;
 }
 
 .feed-list-empty {
@@ -951,7 +946,7 @@ kbd {
 .feed-category-header {
     font-size: 14px;
     font-weight: 700;
-    color: var(--neon-cyan);
+    color: var(--monokai-blue);
     padding: 12px 12px 8px 12px;
     margin-top: 16px;
     text-transform: uppercase;
@@ -965,7 +960,7 @@ kbd {
 .feed-category {
     font-size: 11px;
     padding: 2px 8px;
-    background: var(--neon-purple);
+    background: var(--monokai-purple);
     color: white;
     border-radius: 10px;
     text-transform: uppercase;
@@ -995,20 +990,19 @@ kbd {
 .admin-badge {
     display: inline-block;
     padding: 2px 8px;
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    color: #1a1f3a;
+    background: var(--monokai-orange);
+    color: var(--bg-primary);
     border-radius: 10px;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
 }
 
 .btn-admin {
     display: inline-block;
     padding: 6px 12px;
-    background: var(--neon-purple);
+    background: var(--monokai-purple);
     color: white;
     border: none;
     border-radius: 6px;
@@ -1020,8 +1014,7 @@ kbd {
 }
 
 .btn-admin:hover {
-    background: #9d4edd;
-    box-shadow: 0 0 15px rgba(131, 56, 236, 0.5);
+    background: #c49bff;
     transform: translateY(-1px);
 }
 
@@ -1039,9 +1032,27 @@ kbd {
 }
 
 .btn-logout:hover {
-    color: var(--neon-pink);
-    border-color: var(--neon-pink);
-    background: rgba(255, 0, 110, 0.1);
+    color: var(--monokai-pink);
+    border-color: var(--monokai-pink);
+    background: rgba(249, 38, 114, 0.1);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #5a5949;
 }
 
 /* Responsive */

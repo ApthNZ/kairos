@@ -17,12 +17,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: var(--card-bg);
+            background: var(--bg-card);
             padding: 16px 24px;
             border-radius: 12px;
             margin-bottom: 24px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+            box-shadow: var(--shadow);
         }
 
         .admin-header-left {
@@ -32,9 +32,8 @@
         }
 
         .admin-header h1 {
-            color: var(--neon-cyan);
+            color: var(--monokai-green);
             font-size: 1.5rem;
-            text-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
             display: flex;
             align-items: center;
             gap: 10px;
@@ -44,7 +43,7 @@
         .admin-header h1 img {
             width: 28px;
             height: 28px;
-            filter: drop-shadow(0 0 8px rgba(131, 56, 236, 0.6));
+            filter: drop-shadow(0 0 8px rgba(166, 226, 46, 0.4));
         }
 
         .admin-nav {
@@ -65,14 +64,14 @@
         }
 
         .admin-nav a:hover {
-            border-color: var(--neon-cyan);
-            color: var(--neon-cyan);
-            background: rgba(0, 240, 255, 0.05);
+            border-color: var(--monokai-green);
+            color: var(--monokai-green);
+            background: rgba(166, 226, 46, 0.1);
         }
 
         .admin-nav a.active {
-            border-color: var(--neon-purple);
-            color: var(--neon-purple);
+            border-color: var(--monokai-purple);
+            color: var(--monokai-purple);
         }
 
         .nav-user {
@@ -93,8 +92,8 @@
         .role-badge {
             display: inline-block;
             padding: 2px 6px;
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
-            color: #1a1f3a;
+            background: var(--monokai-orange);
+            color: var(--bg-primary);
             border-radius: 4px;
             font-size: 10px;
             font-weight: 700;
@@ -103,7 +102,7 @@
         }
 
         .admin-section {
-            background: var(--card-bg);
+            background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 24px;
@@ -111,7 +110,7 @@
         }
 
         .admin-section h2 {
-            color: var(--neon-purple);
+            color: var(--monokai-purple);
             font-size: 1.2rem;
             margin-bottom: 20px;
             display: flex;
@@ -127,7 +126,7 @@
         }
 
         .stat-card {
-            background: var(--bg-color);
+            background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 20px;
@@ -137,8 +136,7 @@
         .stat-value {
             font-size: 2rem;
             font-weight: 700;
-            color: var(--neon-cyan);
-            text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+            color: var(--monokai-blue);
         }
 
         .stat-label {
@@ -168,19 +166,19 @@
         }
 
         .user-table tr:hover {
-            background: rgba(0, 240, 255, 0.05);
+            background: rgba(166, 226, 46, 0.05);
         }
 
         .status-active {
-            color: #10b981;
+            color: var(--monokai-green);
         }
 
         .status-inactive {
-            color: #ef4444;
+            color: var(--monokai-pink);
         }
 
         .role-admin {
-            background: var(--neon-purple);
+            background: var(--monokai-purple);
             color: white;
             padding: 2px 8px;
             border-radius: 10px;
@@ -190,8 +188,8 @@
         }
 
         .role-analyst {
-            background: var(--neon-cyan);
-            color: var(--bg-color);
+            background: var(--monokai-blue);
+            color: var(--bg-primary);
             padding: 2px 8px;
             border-radius: 10px;
             font-size: 0.75rem;
@@ -207,7 +205,7 @@
 
         .period-btn {
             padding: 6px 12px;
-            background: var(--bg-color);
+            background: var(--bg-secondary);
             color: var(--text-secondary);
             border: 1px solid var(--border-color);
             border-radius: 6px;
@@ -217,8 +215,8 @@
 
         .period-btn:hover,
         .period-btn.active {
-            border-color: var(--neon-cyan);
-            color: var(--neon-cyan);
+            border-color: var(--monokai-green);
+            color: var(--monokai-green);
         }
 
         .leaderboard {
@@ -232,7 +230,7 @@
             align-items: center;
             gap: 16px;
             padding: 16px;
-            background: var(--bg-color);
+            background: var(--bg-secondary);
             border-radius: 8px;
             border: 1px solid var(--border-color);
         }
@@ -244,9 +242,9 @@
             min-width: 40px;
         }
 
-        .leaderboard-rank.gold { color: #fbbf24; }
-        .leaderboard-rank.silver { color: #9ca3af; }
-        .leaderboard-rank.bronze { color: #f59e0b; }
+        .leaderboard-rank.gold { color: var(--monokai-yellow); }
+        .leaderboard-rank.silver { color: #a6a68a; }
+        .leaderboard-rank.bronze { color: var(--monokai-orange); }
 
         .leaderboard-user {
             flex: 1;
@@ -267,7 +265,7 @@
         .leaderboard-total {
             font-size: 1.5rem;
             font-weight: 700;
-            color: var(--neon-cyan);
+            color: var(--monokai-blue);
         }
 
         .audit-list {
@@ -295,7 +293,7 @@
 
         .audit-user {
             font-weight: 500;
-            color: var(--neon-cyan);
+            color: var(--monokai-blue);
             min-width: 100px;
         }
 
@@ -306,11 +304,11 @@
             font-weight: 500;
         }
 
-        .audit-action.triage_alert { background: rgba(255, 0, 110, 0.2); color: var(--neon-pink); }
-        .audit-action.triage_digest { background: rgba(131, 56, 236, 0.2); color: var(--neon-purple); }
-        .audit-action.triage_skip { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
-        .audit-action.login { background: rgba(16, 185, 129, 0.2); color: #10b981; }
-        .audit-action.logout { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+        .audit-action.triage_alert { background: rgba(249, 38, 114, 0.2); color: var(--monokai-pink); }
+        .audit-action.triage_digest { background: rgba(174, 129, 255, 0.2); color: var(--monokai-purple); }
+        .audit-action.triage_skip { background: rgba(117, 113, 94, 0.2); color: #a6a68a; }
+        .audit-action.login { background: rgba(166, 226, 46, 0.2); color: var(--monokai-green); }
+        .audit-action.logout { background: rgba(117, 113, 94, 0.2); color: #a6a68a; }
 
         .create-user-form {
             display: grid;
@@ -318,7 +316,7 @@
             gap: 12px;
             align-items: end;
             padding: 16px;
-            background: var(--bg-color);
+            background: var(--bg-secondary);
             border-radius: 8px;
             margin-bottom: 20px;
         }
@@ -326,7 +324,7 @@
         .create-user-form input,
         .create-user-form select {
             padding: 10px 12px;
-            background: var(--card-bg);
+            background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 6px;
             color: var(--text-primary);
@@ -336,13 +334,13 @@
         .create-user-form input:focus,
         .create-user-form select:focus {
             outline: none;
-            border-color: var(--neon-cyan);
+            border-color: var(--monokai-green);
         }
 
         .btn-create {
             padding: 10px 20px;
-            background: var(--neon-cyan);
-            color: var(--bg-color);
+            background: var(--monokai-green);
+            color: var(--bg-primary);
             border: none;
             border-radius: 6px;
             font-weight: 600;
@@ -351,7 +349,7 @@
         }
 
         .btn-create:hover {
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+            background: #b8f332;
         }
 
         .btn-toggle {
@@ -366,8 +364,8 @@
         }
 
         .btn-toggle:hover {
-            border-color: var(--neon-pink);
-            color: var(--neon-pink);
+            border-color: var(--monokai-pink);
+            color: var(--monokai-pink);
         }
 
         .loading {

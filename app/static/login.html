@@ -17,7 +17,7 @@
         }
 
         .login-box {
-            background: var(--card-bg);
+            background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 40px;
@@ -32,11 +32,9 @@
         }
 
         .login-header h1 {
-            color: var(--neon-cyan);
+            color: var(--monokai-green);
             font-size: 2.5rem;
             margin-bottom: 10px;
-            text-shadow: 0 0 20px rgba(0, 240, 255, 0.6),
-                         0 0 40px rgba(0, 240, 255, 0.4);
         }
 
         .login-header p {
@@ -66,7 +64,7 @@
             padding: 12px 16px;
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            background: var(--bg-color);
+            background: var(--bg-secondary);
             color: var(--text-primary);
             font-size: 1rem;
             transition: border-color 0.2s, box-shadow 0.2s;
@@ -74,25 +72,24 @@
 
         .login-form .form-group input:focus {
             outline: none;
-            border-color: var(--neon-cyan);
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            border-color: var(--monokai-green);
+            box-shadow: 0 0 10px rgba(166, 226, 46, 0.2);
         }
 
         .login-btn {
             padding: 14px;
-            background: var(--neon-cyan);
-            color: var(--bg-color);
+            background: var(--monokai-green);
+            color: var(--bg-primary);
             border: none;
             border-radius: 8px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
         }
 
         .login-btn:hover {
-            box-shadow: 0 0 30px rgba(0, 240, 255, 0.6);
+            background: #b8f332;
             transform: translateY(-2px);
         }
 
@@ -107,9 +104,9 @@
         }
 
         .error-message {
-            background: rgba(255, 0, 110, 0.1);
-            border: 1px solid rgba(255, 0, 110, 0.3);
-            color: var(--neon-pink);
+            background: rgba(249, 38, 114, 0.1);
+            border: 1px solid rgba(249, 38, 114, 0.3);
+            color: var(--monokai-pink);
             padding: 12px 16px;
             border-radius: 8px;
             font-size: 0.9rem;
