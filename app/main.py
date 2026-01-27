@@ -6,9 +6,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any
 
+import time
+from collections import defaultdict
+
 from fastapi import FastAPI, HTTPException, Depends, Header, Response, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel, HttpUrl, EmailStr, Field
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -28,6 +32,55 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+# Security Middleware: Add security headers to all responses
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+
+# Rate Limiting Middleware
+RATE_LIMIT_REQUESTS = 100  # requests per minute
+rate_limit_store: Dict[str, list] = defaultdict(list)
+
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        client_ip = request.client.host if request.client else "unknown"
+        current_time = time.time()
+
+        # Clean up old entries (older than 60 seconds)
+        rate_limit_store[client_ip] = [
+            t for t in rate_limit_store[client_ip]
+            if current_time - t < 60
+        ]
+
+        # Check rate limit
+        if len(rate_limit_store[client_ip]) >= RATE_LIMIT_REQUESTS:
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Too many requests. Please slow down."},
+                headers={"Retry-After": "60"}
+            )
+
+        # Record this request
+        rate_limit_store[client_ip].append(current_time)
+
+        response = await call_next(request)
+
+        # Add rate limit headers
+        remaining = RATE_LIMIT_REQUESTS - len(rate_limit_store[client_ip])
+        response.headers["X-RateLimit-Limit"] = str(RATE_LIMIT_REQUESTS)
+        response.headers["X-RateLimit-Remaining"] = str(max(0, remaining))
+
+        return response
 
 
 # Pydantic models
@@ -224,13 +277,20 @@ async def lifespan(app: FastAPI):
     webhook_task.cancel()
 
 
-# Create FastAPI app
+# Create FastAPI app (disable OpenAPI docs in production)
 app = FastAPI(
     title="RSS Triage System",
     description="RSS feed aggregation and triage system",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None
 )
+
+# Add security middleware
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RateLimitMiddleware)
 
 
 # Health endpoint (no auth required)
