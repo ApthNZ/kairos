@@ -161,7 +161,7 @@ After deploying any new service, container, or API, you MUST update:
    - `PROJECTS.md` - Add project entry
    - `CURRENT_STATE.md` - Update container/service counts
 
-2. **Homepage Dashboard** (`/home/apth/homepage/config/`):
+2. **Homepage Dashboard** (`/home/apth/code/homepage/config/`):
    - `services.yaml` - Add service tile with appropriate icon and container monitoring
    - Consider if it needs a custom widget via Homepage API
 
